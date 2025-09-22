@@ -80,6 +80,38 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
             icon: const Icon(Icons.save),
             onPressed: _saveNote,
           ),
+          if (widget.note != null)
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Delete Note'),
+                    content:
+                        const Text('Are you sure you want to delete this note?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          ref
+                              .read(notesProvider.notifier)
+                              .deleteNote(widget.note!);
+                          Navigator.pop(context);
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Delete'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
         ],
       ),
       body: Padding(

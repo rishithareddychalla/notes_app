@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notes_app/providers/note_provider.dart';
+import 'package:notes_app/providers/settings_provider.dart';
 import 'package:notes_app/screens/note_editor_page.dart';
 import 'package:notes_app/screens/settings_page.dart';
 import 'package:notes_app/widgets/note_card.dart';
+import 'package:notes_app/widgets/note_list_tile.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -11,6 +13,7 @@ class HomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notes = ref.watch(notesProvider);
+    final noteView = ref.watch(noteViewProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -37,29 +40,47 @@ class HomePage extends ConsumerWidget {
           ? const Center(
               child: Text('No notes yet. Create one!'),
             )
-          : GridView.builder(
-              padding: const EdgeInsets.all(8.0),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 8.0,
-                mainAxisSpacing: 8.0,
-              ),
-              itemCount: notes.length,
-              itemBuilder: (context, index) {
-                final note = notes[index];
-                return NoteCard(
-                  note: note,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => NoteEditorPage(note: note),
-                      ),
+          : noteView == NoteView.grid
+              ? GridView.builder(
+                  padding: const EdgeInsets.all(8.0),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 8.0,
+                    mainAxisSpacing: 8.0,
+                  ),
+                  itemCount: notes.length,
+                  itemBuilder: (context, index) {
+                    final note = notes[index];
+                    return NoteCard(
+                      note: note,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => NoteEditorPage(note: note),
+                          ),
+                        );
+                      },
                     );
                   },
-                );
-              },
-            ),
+                )
+              : ListView.builder(
+                  itemCount: notes.length,
+                  itemBuilder: (context, index) {
+                    final note = notes[index];
+                    return NoteListTile(
+                      note: note,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => NoteEditorPage(note: note),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(

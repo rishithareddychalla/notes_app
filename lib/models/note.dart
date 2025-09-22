@@ -34,6 +34,9 @@ class Note extends HiveObject {
   @HiveField(9)
   DateTime? reminder;
 
+  @HiveField(10)
+  DateTime? deletionDate;
+
   Note({
     required this.title,
     required this.content,
@@ -45,5 +48,6 @@ class Note extends HiveObject {
     this.fontStyle = 'default',
     this.paragraphStyle = 'default',
     this.reminder,
+    this.deletionDate,
   });
 }
