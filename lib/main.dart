@@ -30,6 +30,7 @@ class MyApp extends ConsumerWidget {
     final themeMode = ref.watch(settingsProvider);
 
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Notes App',
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(),
