@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notes_app/providers/note_provider.dart';
 import 'package:notes_app/providers/settings_provider.dart';
 import 'package:notes_app/screens/note_editor_page.dart';
+import 'package:notes_app/screens/recently_deleted_page.dart';
 import 'package:notes_app/screens/settings_page.dart';
 import 'package:notes_app/widgets/note_card.dart';
 import 'package:notes_app/widgets/note_list_tile.dart';
@@ -23,6 +24,16 @@ class HomePage extends ConsumerWidget {
             icon: const Icon(Icons.search),
             onPressed: () {
               // TODO: Implement search functionality
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const RecentlyDeletedPage()),
+              );
             },
           ),
           IconButton(
