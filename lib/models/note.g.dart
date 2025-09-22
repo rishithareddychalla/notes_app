@@ -29,13 +29,14 @@ class NoteAdapter extends TypeAdapter<Note> {
       fontStyle: fields[7] as String,
       paragraphStyle: fields[8] as String,
       reminder: fields[9] as DateTime?,
+      deletionDate: fields[10] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Note obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.title)
       ..writeByte(1)
@@ -55,7 +56,9 @@ class NoteAdapter extends TypeAdapter<Note> {
       ..writeByte(8)
       ..write(obj.paragraphStyle)
       ..writeByte(9)
-      ..write(obj.reminder);
+      ..write(obj.reminder)
+      ..writeByte(10)
+      ..write(obj.deletionDate);
   }
 
   @override
