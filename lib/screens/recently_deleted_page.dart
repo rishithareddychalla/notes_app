@@ -9,7 +9,7 @@ class RecentlyDeletedPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final deletedNotes = ref.watch(deletedNotesProvider);
-
+    print('Deleted notes in UI: $deletedNotes');
     return Scaffold(
       appBar: AppBar(
         title: const Text('Recently Deleted'),
