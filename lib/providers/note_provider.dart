@@ -1,87 +1,110 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:notes_app/models/note.dart';
 
-/// Manages the state of the notes, including soft deletes and restores.
+const String _notesKey = 'notes';
+const String _deletedNotesKey = 'deleted_notes';
+
+final sharedPreferencesProvider = FutureProvider<SharedPreferences>((ref) async {
+  return await SharedPreferences.getInstance();
+});
+
 class NotesNotifier extends StateNotifier<List<Note>> {
-  NotesNotifier(this._ref) : super([]) {
-    // Load notes from the database when the provider is initialized.
+  NotesNotifier(this.ref) : super([]) {
     _loadNotes();
-    // Clean up notes that were deleted over 30 days ago.
-    cleanupDeletedNotes();
   }
 
-  final Ref _ref;
-  final _notesBox = Hive.box<Note>('notes');
-  final _deletedNotesBox = Hive.box<Note>('deleted_notes');
+  final Ref ref;
 
-  /// Loads all non-deleted notes from the Hive box into the state.
-  void _loadNotes() {
-    state = _notesBox.values.toList().cast<Note>();
+  Future<void> _loadNotes() async {
+    final prefs = await ref.read(sharedPreferencesProvider.future);
+    final notesJson = prefs.getStringList(_notesKey) ?? [];
+    state = notesJson.map((note) => Note.fromJson(note)).toList();
   }
 
-  /// Adds a new note to the database.
+  Future<void> _saveNotes() async {
+    final prefs = await ref.read(sharedPreferencesProvider.future);
+    final notesJson = state.map((note) => note.toJson()).toList();
+    await prefs.setStringList(_notesKey, notesJson);
+  }
+
   void addNote(Note note) {
-    _notesBox.add(note);
-    _loadNotes();
+    state = [...state, note];
+    _saveNotes();
   }
 
-  /// Updates an existing note in the database.
-  void updateNote(dynamic key, Note note) {
-    _notesBox.put(key, note);
-    _loadNotes();
+  void updateNote(Note note) {
+    state = [
+      for (final n in state)
+        if (n.id == note.id) note else n,
+    ];
+    _saveNotes();
   }
 
-  /// Soft deletes a note by moving it to the 'deleted_notes' box.
   void deleteNote(Note note) {
-    note.deletionDate = DateTime.now();
-    // Use the note's original key to store it in the deleted box.
-    // This is important for being able to restore it later.
-    _deletedNotesBox.put(note.key, note);
-    _notesBox.delete(note.key);
-    _loadNotes();
-    // Invalidate the deletedNotesProvider to trigger a UI update on the
-    // Recently Deleted page.
-    _ref.invalidate(deletedNotesProvider);
-  }
-
-  /// Restores a soft-deleted note from the 'deleted_notes' box.
-  void restoreNote(Note note) {
-    note.deletionDate = null;
-    // Use the note's original key to move it back to the main notes box.
-    _notesBox.put(note.key, note);
-    _deletedNotesBox.delete(note.key);
-    _loadNotes();
-    // Invalidate the deletedNotesProvider to trigger a UI update.
-    _ref.invalidate(deletedNotesProvider);
-  }
-
-  /// Permanently deletes a note from the 'deleted_notes' box.
-  void permanentlyDeleteNote(Note note) {
-    _deletedNotesBox.delete(note.key);
-    // Invalidate the deletedNotesProvider to trigger a UI update.
-    _ref.invalidate(deletedNotesProvider);
-  }
-
-  /// Permanently deletes any notes that were soft-deleted more than 30 days ago.
-  void cleanupDeletedNotes() {
-    final now = DateTime.now();
-    for (final note in _deletedNotesBox.values) {
-      if (note.deletionDate != null &&
-          now.difference(note.deletionDate!).inDays > 30) {
-        permanentlyDeleteNote(note);
-      }
-    }
+    state = state.where((n) => n.id != note.id).toList();
+    _saveNotes();
+    ref.read(deletedNotesProvider.notifier).addNote(note.copyWith(deletionDate: DateTime.now()));
   }
 }
 
-/// Provider for the list of active (non-deleted) notes.
 final notesProvider = StateNotifierProvider<NotesNotifier, List<Note>>((ref) {
   return NotesNotifier(ref);
 });
 
-/// Provider for the list of soft-deleted notes.
-final deletedNotesProvider = Provider<List<Note>>((ref) {
-  final deletedNotesBox = Hive.box<Note>('deleted_notes');
-  return deletedNotesBox.values.toList().cast<Note>();
+class DeletedNotesNotifier extends StateNotifier<List<Note>> {
+  DeletedNotesNotifier(this.ref) : super([]) {
+    _loadDeletedNotes();
+    cleanupDeletedNotes();
+  }
+
+  final Ref ref;
+
+  Future<void> _loadDeletedNotes() async {
+    final prefs = await ref.read(sharedPreferencesProvider.future);
+    final notesJson = prefs.getStringList(_deletedNotesKey) ?? [];
+    state = notesJson.map((note) => Note.fromJson(note)).toList();
+  }
+
+  Future<void> _saveDeletedNotes() async {
+    final prefs = await ref.read(sharedPreferencesProvider.future);
+    final notesJson = state.map((note) => note.toJson()).toList();
+    await prefs.setStringList(_deletedNotesKey, notesJson);
+  }
+
+  void addNote(Note note) {
+    state = [...state, note];
+    _saveDeletedNotes();
+  }
+
+  void restoreNote(Note note) {
+    state = state.where((n) => n.id != note.id).toList();
+    _saveDeletedNotes();
+    ref.read(notesProvider.notifier).addNote(note.copyWith(deletionDate: null));
+  }
+
+  void permanentlyDeleteNote(Note note) {
+    state = state.where((n) => n.id != note.id).toList();
+    _saveDeletedNotes();
+  }
+
+  void cleanupDeletedNotes() {
+    final now = DateTime.now();
+    final notesToKeep = state.where((note) {
+      if (note.deletionDate != null) {
+        return now.difference(note.deletionDate!).inDays <= 30;
+      }
+      return true;
+    }).toList();
+
+    if (notesToKeep.length != state.length) {
+      state = notesToKeep;
+      _saveDeletedNotes();
+    }
+  }
+}
+
+final deletedNotesProvider = StateNotifierProvider<DeletedNotesNotifier, List<Note>>((ref) {
+  return DeletedNotesNotifier(ref);
 });
