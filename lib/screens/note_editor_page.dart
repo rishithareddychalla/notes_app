@@ -52,19 +52,11 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
       notesNotifier.addNote(newNote);
     } else {
       // Update existing note
-      final updatedNote = Note(
+      final updatedNote = widget.note!.copyWith(
         title: title,
         content: content,
-        creationDate: widget.note!.creationDate,
-        imagePaths: widget.note!.imagePaths,
-        documentPaths: widget.note!.documentPaths,
-        checklist: widget.note!.checklist,
-        themeColor: widget.note!.themeColor,
-        fontStyle: widget.note!.fontStyle,
-        paragraphStyle: widget.note!.paragraphStyle,
-        reminder: widget.note!.reminder,
       );
-      notesNotifier.updateNote(widget.note!.key, updatedNote);
+      notesNotifier.updateNote(updatedNote);
     }
 
     Navigator.pop(context);
