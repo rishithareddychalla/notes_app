@@ -26,7 +26,6 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.read(notesProvider.notifier).cleanupDeletedNotes();
     final themeMode = ref.watch(settingsProvider);
 
     return MaterialApp(
