@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:notes_app/models/note.dart';
@@ -25,6 +27,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
   final List<TextEditingController> _checklistItemControllers = [];
   List<String> _imagePaths = [];
   Color _noteColor = Colors.white;
+  String? _drawingData;
 
   @override
   void initState() {
@@ -33,6 +36,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
       _titleController.text = widget.note!.title;
       _contentController.text = widget.note!.content;
       _imagePaths = List<String>.from(widget.note!.imagePaths);
+      _drawingData = widget.note!.drawing;
       _noteColor = widget.note!.themeColor != 'default'
           ? Color(int.parse(widget.note!.themeColor, radix: 16))
           : Colors.white;
@@ -134,7 +138,8 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
     if (title.isEmpty &&
         content.isEmpty &&
         checklist.isEmpty &&
-        _imagePaths.isEmpty) {
+        _imagePaths.isEmpty &&
+        _drawingData == null) {
       if (widget.note != null) {
         notesNotifier.deleteNote(widget.note!);
       }
@@ -151,6 +156,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         checklist: checklist,
         imagePaths: _imagePaths,
         themeColor: _noteColor.value.toRadixString(16),
+        drawing: _drawingData,
       );
       notesNotifier.addNote(newNote);
     } else {
@@ -161,6 +167,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         checklist: checklist,
         imagePaths: _imagePaths,
         themeColor: _noteColor.value.toRadixString(16),
+        drawing: _drawingData,
       );
       notesNotifier.updateNote(updatedNote);
     }
@@ -225,6 +232,69 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         );
       },
     );
+  }
+
+  Widget _buildDrawingPreview() {
+    if (_drawingData == null || _drawingData!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final List<dynamic> history = jsonDecode(_drawingData!);
+    final List<PaintContent> contents = history
+        .map((item) =>
+            _getPaintContentFromJson(item as Map<String, dynamic>))
+        .toList();
+
+    final controller = DrawingController();
+    controller.addContents(contents);
+
+    return GestureDetector(
+      onTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DrawingPage(drawingData: _drawingData),
+          ),
+        );
+
+        if (result != null) {
+          setState(() {
+            _drawingData = result;
+          });
+        }
+      },
+      child: AbsorbPointer(
+        child: DrawingBoard(
+          controller: controller,
+          background: Container(
+            width: double.infinity,
+            height: 200,
+            color: Colors.grey[200],
+          ),
+          isReadOnly: true,
+        ),
+      ),
+    );
+  }
+
+  PaintContent _getPaintContentFromJson(Map<String, dynamic> json) {
+    final String type = json['type'] as String;
+    switch (type) {
+      case 'SimpleLine':
+        return SimpleLine.fromJson(json);
+      case 'SmoothLine':
+        return SmoothLine.fromJson(json);
+      case 'StraightLine':
+        return StraightLine.fromJson(json);
+      case 'Rectangle':
+        return Rectangle.fromJson(json);
+      case 'Circle':
+        return Circle.fromJson(json);
+      case 'Eraser':
+        return Eraser.fromJson(json);
+      default:
+        throw Exception('Unknown PaintContent type: $type');
+    }
   }
 
   Widget _buildImageGrid() {
@@ -324,6 +394,8 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                 style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
+              _buildDrawingPreview(),
+              const SizedBox(height: 16),
               if (_imagePaths.isNotEmpty) ...[
                 _buildImageGrid(),
                 const SizedBox(height: 16),
@@ -363,13 +435,14 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                 final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const DrawingPage(),
+                    builder: (context) =>
+                        DrawingPage(drawingData: _drawingData),
                   ),
                 );
 
                 if (result != null) {
                   setState(() {
-                    _imagePaths.add(result);
+                    _drawingData = result;
                   });
                 }
               },

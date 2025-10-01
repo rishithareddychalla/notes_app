@@ -13,6 +13,7 @@ class Note {
   DateTime? reminder;
   DateTime? deletionDate;
   final String id;
+  String? drawing;
 
   Note({
     required this.title,
@@ -26,6 +27,7 @@ class Note {
     this.paragraphStyle = 'default',
     this.reminder,
     this.deletionDate,
+    this.drawing,
     String? id,
   }) : id = id ?? DateTime.now().toIso8601String();
 
@@ -41,6 +43,7 @@ class Note {
     String? paragraphStyle,
     DateTime? reminder,
     DateTime? deletionDate,
+    String? drawing,
     String? id,
   }) {
     return Note(
@@ -55,6 +58,7 @@ class Note {
       paragraphStyle: paragraphStyle ?? this.paragraphStyle,
       reminder: reminder ?? this.reminder,
       deletionDate: deletionDate ?? this.deletionDate,
+      drawing: drawing ?? this.drawing,
       id: id ?? this.id,
     );
   }
@@ -72,6 +76,7 @@ class Note {
       'paragraphStyle': paragraphStyle,
       'reminder': reminder?.toIso8601String(),
       'deletionDate': deletionDate?.toIso8601String(),
+      'drawing': drawing,
       'id': id,
     };
   }
@@ -87,8 +92,12 @@ class Note {
       themeColor: map['themeColor'] ?? 'default',
       fontStyle: map['fontStyle'] ?? 'default',
       paragraphStyle: map['paragraphStyle'] ?? 'default',
-      reminder: map['reminder'] != null ? DateTime.parse(map['reminder']) : null,
-      deletionDate: map['deletionDate'] != null ? DateTime.parse(map['deletionDate']) : null,
+      reminder:
+          map['reminder'] != null ? DateTime.parse(map['reminder']) : null,
+      deletionDate: map['deletionDate'] != null
+          ? DateTime.parse(map['deletionDate'])
+          : null,
+      drawing: map['drawing'],
       id: map['id'] ?? '',
     );
   }
