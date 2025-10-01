@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
+import 'package:flutter_drawing_board/paint_contents.dart';
 
 class DrawingPage extends StatefulWidget {
   final String? drawingData;
@@ -20,8 +21,7 @@ class _DrawingPageState extends State<DrawingPage> {
     if (widget.drawingData != null && widget.drawingData!.isNotEmpty) {
       final List<dynamic> history = jsonDecode(widget.drawingData!);
       final List<PaintContent> contents = history
-          .map((item) =>
-              _getPaintContentFromJson(item as Map<String, dynamic>))
+          .map((item) => _getPaintContentFromJson(item as Map<String, dynamic>))
           .toList();
       _drawingController.addContents(contents);
     }
@@ -62,8 +62,7 @@ class _DrawingPageState extends State<DrawingPage> {
           IconButton(
             icon: const Icon(Icons.check),
             onPressed: () {
-              final drawingJson =
-                  jsonEncode(_drawingController.getJsonList());
+              final drawingJson = jsonEncode(_drawingController.getJsonList());
               Navigator.pop(context, drawingJson);
             },
           ),
