@@ -15,12 +15,32 @@ class NoteListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(note.title),
-      subtitle: Text(
-        note.content,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-      ),
+      subtitle: note.checklist.isNotEmpty
+          ? _buildChecklistPreview(note.checklist)
+          : Text(
+              note.content,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
       onTap: onTap,
+    );
+  }
+
+  Widget _buildChecklistPreview(List<Map<String, dynamic>> checklist) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: checklist.take(2).map((item) {
+        return Text(
+          '- ${item['text']}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            decoration: item['checked']
+                ? TextDecoration.lineThrough
+                : TextDecoration.none,
+          ),
+        );
+      }).toList(),
     );
   }
 }

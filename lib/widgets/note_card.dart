@@ -29,15 +29,51 @@ class NoteCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                note.content,
-                maxLines: 5,
-                overflow: TextOverflow.ellipsis,
-              ),
+              if (note.checklist.isNotEmpty)
+                _buildChecklistPreview(note.checklist)
+              else
+                Text(
+                  note.content,
+                  maxLines: 5,
+                  overflow: TextOverflow.ellipsis,
+                ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildChecklistPreview(List<Map<String, dynamic>> checklist) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: checklist.take(5).map((item) {
+        return Row(
+          children: [
+            SizedBox(
+              height: 24,
+              width: 24,
+              child: Checkbox(
+                value: item['checked'],
+                onChanged: null, // Make it non-interactive in preview
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                item['text'],
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  decoration: item['checked']
+                      ? TextDecoration.lineThrough
+                      : TextDecoration.none,
+                ),
+              ),
+            ),
+          ],
+        );
+      }).toList(),
     );
   }
 }
