@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:notes_app/models/note.dart';
 import 'package:notes_app/providers/note_provider.dart';
+import 'package:notes_app/screens/drawing_page.dart';
 
 class NoteEditorPage extends ConsumerStatefulWidget {
   final Note? note;
@@ -355,6 +356,23 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
             IconButton(
               icon: const Icon(Icons.color_lens),
               onPressed: _pickColor,
+            ),
+            IconButton(
+              icon: const Icon(Icons.brush),
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const DrawingPage(),
+                  ),
+                );
+
+                if (result != null) {
+                  setState(() {
+                    _imagePaths.add(result);
+                  });
+                }
+              },
             ),
           ],
         ),
