@@ -1,11 +1,11 @@
-import 'dart:io';
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
-import 'package:path_provider/path_provider.dart';
 
 class DrawingPage extends StatefulWidget {
-  const DrawingPage({super.key});
+  final String? drawingData;
+
+  const DrawingPage({super.key, this.drawingData});
 
   @override
   _DrawingPageState createState() => _DrawingPageState();
@@ -15,9 +15,42 @@ class _DrawingPageState extends State<DrawingPage> {
   final DrawingController _drawingController = DrawingController();
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.drawingData != null && widget.drawingData!.isNotEmpty) {
+      final List<dynamic> history = jsonDecode(widget.drawingData!);
+      final List<PaintContent> contents = history
+          .map((item) =>
+              _getPaintContentFromJson(item as Map<String, dynamic>))
+          .toList();
+      _drawingController.addContents(contents);
+    }
+  }
+
+  @override
   void dispose() {
     _drawingController.dispose();
     super.dispose();
+  }
+
+  PaintContent _getPaintContentFromJson(Map<String, dynamic> json) {
+    final String type = json['type'] as String;
+    switch (type) {
+      case 'SimpleLine':
+        return SimpleLine.fromJson(json);
+      case 'SmoothLine':
+        return SmoothLine.fromJson(json);
+      case 'StraightLine':
+        return StraightLine.fromJson(json);
+      case 'Rectangle':
+        return Rectangle.fromJson(json);
+      case 'Circle':
+        return Circle.fromJson(json);
+      case 'Eraser':
+        return Eraser.fromJson(json);
+      default:
+        throw Exception('Unknown PaintContent type: $type');
+    }
   }
 
   @override
@@ -28,15 +61,10 @@ class _DrawingPageState extends State<DrawingPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.check),
-            onPressed: () async {
-              final image = await _drawingController.getImageData();
-              if (image == null) return;
-              final directory = await getTemporaryDirectory();
-              final path =
-                  '${directory.path}/${DateTime.now().millisecondsSinceEpoch}.png';
-              final file = File(path);
-              await file.writeAsBytes(image.buffer.asUint8List());
-              Navigator.pop(context, path);
+            onPressed: () {
+              final drawingJson =
+                  jsonEncode(_drawingController.getJsonList());
+              Navigator.pop(context, drawingJson);
             },
           ),
         ],
@@ -48,6 +76,8 @@ class _DrawingPageState extends State<DrawingPage> {
           height: 400,
           color: Colors.white,
         ),
+        showDefaultActions: true,
+        showDefaultTools: true,
       ),
     );
   }
