@@ -14,6 +14,7 @@ class Note {
   DateTime? deletionDate;
   final String id;
   String? drawing;
+  String? drawingImagePath;
 
   Note({
     required this.title,
@@ -28,6 +29,7 @@ class Note {
     this.reminder,
     this.deletionDate,
     this.drawing,
+    this.drawingImagePath,
     String? id,
   }) : id = id ?? DateTime.now().toIso8601String();
 
@@ -44,6 +46,7 @@ class Note {
     DateTime? reminder,
     DateTime? deletionDate,
     String? drawing,
+    String? drawingImagePath,
     String? id,
   }) {
     return Note(
@@ -59,6 +62,7 @@ class Note {
       reminder: reminder ?? this.reminder,
       deletionDate: deletionDate ?? this.deletionDate,
       drawing: drawing ?? this.drawing,
+      drawingImagePath: drawingImagePath ?? this.drawingImagePath,
       id: id ?? this.id,
     );
   }
@@ -77,6 +81,7 @@ class Note {
       'reminder': reminder?.toIso8601String(),
       'deletionDate': deletionDate?.toIso8601String(),
       'drawing': drawing,
+      'drawingImagePath': drawingImagePath,
       'id': id,
     };
   }
@@ -98,6 +103,7 @@ class Note {
           ? DateTime.parse(map['deletionDate'])
           : null,
       drawing: map['drawing'],
+      drawingImagePath: map['drawingImagePath'],
       id: map['id'] ?? '',
     );
   }

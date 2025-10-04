@@ -1,15 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:flutter_drawing_board/flutter_drawing_board.dart';
-import 'package:flutter_drawing_board/paint_contents.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:notes_app/models/note.dart';
 import 'package:notes_app/providers/note_provider.dart';
 import 'package:notes_app/screens/drawing_page.dart';
+import 'package:path_provider/path_provider.dart';
 
 class NoteEditorPage extends ConsumerStatefulWidget {
   final Note? note;
@@ -29,6 +29,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
   List<String> _imagePaths = [];
   Color _noteColor = Colors.white;
   String? _drawingData;
+  String? _drawingImagePath;
 
   @override
   void initState() {
@@ -38,6 +39,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
       _contentController.text = widget.note!.content;
       _imagePaths = List<String>.from(widget.note!.imagePaths);
       _drawingData = widget.note!.drawing;
+      _drawingImagePath = widget.note!.drawingImagePath;
       _noteColor = widget.note!.themeColor != 'default'
           ? Color(int.parse(widget.note!.themeColor, radix: 16))
           : Colors.white;
@@ -158,6 +160,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         imagePaths: _imagePaths,
         themeColor: _noteColor.value.toRadixString(16),
         drawing: _drawingData,
+        drawingImagePath: _drawingImagePath,
       );
       notesNotifier.addNote(newNote);
     } else {
@@ -169,6 +172,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         imagePaths: _imagePaths,
         themeColor: _noteColor.value.toRadixString(16),
         drawing: _drawingData,
+        drawingImagePath: _drawingImagePath,
       );
       notesNotifier.updateNote(updatedNote);
     }
@@ -236,18 +240,9 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
   }
 
   Widget _buildDrawingPreview() {
-    if (_drawingData == null || _drawingData!.isEmpty) {
+    if (_drawingImagePath == null || _drawingImagePath!.isEmpty) {
       return const SizedBox.shrink();
     }
-
-    final List<dynamic> history = jsonDecode(_drawingData!);
-    final List<PaintContent> contents = history
-        .map((item) =>
-            _getPaintContentFromJson(item as Map<String, dynamic>))
-        .toList();
-
-    final controller = DrawingController();
-    controller.addContents(contents);
 
     return GestureDetector(
       onTap: () async {
@@ -259,42 +254,27 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         );
 
         if (result != null) {
-          setState(() {
-            _drawingData = result;
-          });
+          _drawingData = result['json'];
+          final imageBytes = result['image'] as Uint8List?;
+          if (imageBytes != null) {
+            final directory = await getApplicationDocumentsDirectory();
+            final path =
+                '${directory.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png';
+            final file = File(path);
+            await file.writeAsBytes(imageBytes);
+            setState(() {
+              _drawingImagePath = path;
+            });
+          }
         }
       },
-      child: IgnorePointer(
-        child: DrawingBoard(
-          controller: controller,
-          background: Container(
-            width: double.infinity,
-            height: 200,
-            color: Colors.grey[200],
-          ),
-        ),
+      child: Image.file(
+        File(_drawingImagePath!),
+        width: double.infinity,
+        height: 200,
+        fit: BoxFit.contain,
       ),
     );
-  }
-
-  PaintContent _getPaintContentFromJson(Map<String, dynamic> json) {
-    final String type = json['type'] as String;
-    switch (type) {
-      case 'SimpleLine':
-        return SimpleLine.fromJson(json);
-      case 'SmoothLine':
-        return SmoothLine.fromJson(json);
-      case 'StraightLine':
-        return StraightLine.fromJson(json);
-      case 'Rectangle':
-        return Rectangle.fromJson(json);
-      case 'Circle':
-        return Circle.fromJson(json);
-      case 'Eraser':
-        return Eraser.fromJson(json);
-      default:
-        throw Exception('Unknown PaintContent type: $type');
-    }
   }
 
   Widget _buildImageGrid() {
@@ -441,9 +421,19 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                 );
 
                 if (result != null) {
-                  setState(() {
-                    _drawingData = result;
-                  });
+                  _drawingData = result['json'];
+                  final imageBytes = result['image'] as Uint8List?;
+                  if (imageBytes != null) {
+                    final directory =
+                        await getApplicationDocumentsDirectory();
+                    final path =
+                        '${directory.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png';
+                    final file = File(path);
+                    await file.writeAsBytes(imageBytes);
+                    setState(() {
+                      _drawingImagePath = path;
+                    });
+                  }
                 }
               },
             ),
