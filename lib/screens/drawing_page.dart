@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:flutter_drawing_board/paint_contents.dart';
@@ -61,9 +62,13 @@ class _DrawingPageState extends State<DrawingPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.check),
-            onPressed: () {
+            onPressed: () async {
               final drawingJson = jsonEncode(_drawingController.getJsonList());
-              Navigator.pop(context, drawingJson);
+              final imageBytes = await _drawingController.getImageData();
+              Navigator.pop(context, {
+                'json': drawingJson,
+                'image': imageBytes?.buffer.asUint8List(),
+              });
             },
           ),
         ],
