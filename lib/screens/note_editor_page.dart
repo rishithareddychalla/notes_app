@@ -244,36 +244,53 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
       return const SizedBox.shrink();
     }
 
-    return GestureDetector(
-      onTap: () async {
-        final result = await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DrawingPage(drawingData: _drawingData),
-          ),
-        );
+    return Stack(
+      children: [
+        GestureDetector(
+          onTap: () async {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DrawingPage(drawingData: _drawingData),
+              ),
+            );
 
-        if (result != null) {
-          _drawingData = result['json'];
-          final imageBytes = result['image'] as Uint8List?;
-          if (imageBytes != null) {
-            final directory = await getApplicationDocumentsDirectory();
-            final path =
-                '${directory.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png';
-            final file = File(path);
-            await file.writeAsBytes(imageBytes);
-            setState(() {
-              _drawingImagePath = path;
-            });
-          }
-        }
-      },
-      child: Image.file(
-        File(_drawingImagePath!),
-        width: double.infinity,
-        height: 200,
-        fit: BoxFit.contain,
-      ),
+            if (result != null) {
+              _drawingData = result['json'];
+              final imageBytes = result['image'] as Uint8List?;
+              if (imageBytes != null) {
+                final directory = await getApplicationDocumentsDirectory();
+                final path =
+                    '${directory.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png';
+                final file = File(path);
+                await file.writeAsBytes(imageBytes);
+                setState(() {
+                  _drawingImagePath = path;
+                });
+              }
+            }
+          },
+          child: Image.file(
+            File(_drawingImagePath!),
+            width: double.infinity,
+            height: 200,
+            fit: BoxFit.contain,
+          ),
+        ),
+        Positioned(
+          top: -10,
+          right: -10,
+          child: IconButton(
+            icon: const Icon(Icons.remove_circle, color: Colors.red),
+            onPressed: () {
+              setState(() {
+                _drawingData = null;
+                _drawingImagePath = null;
+              });
+            },
+          ),
+        ),
+      ],
     );
   }
 
