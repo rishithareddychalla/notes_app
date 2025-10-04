@@ -15,10 +15,26 @@ class DrawingPage extends StatefulWidget {
 
 class _DrawingPageState extends State<DrawingPage> {
   final DrawingController _drawingController = DrawingController();
+  Color _selectedColor = Colors.black;
+  double _strokeWidth = 4.0;
+  final List<Color> _colors = [
+    Colors.black,
+    Colors.red,
+    Colors.orange,
+    Colors.yellow,
+    Colors.green,
+    Colors.blue,
+    Colors.indigo,
+    Colors.purple,
+  ];
 
   @override
   void initState() {
     super.initState();
+    _drawingController.setStyle(
+      color: _selectedColor,
+      strokeWidth: _strokeWidth,
+    );
     if (widget.drawingData != null && widget.drawingData!.isNotEmpty) {
       final List<dynamic> history = jsonDecode(widget.drawingData!);
       final List<PaintContent> contents = history
@@ -54,12 +70,72 @@ class _DrawingPageState extends State<DrawingPage> {
     }
   }
 
+  Widget _buildColorPalette() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: _colors.map((color) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: ChoiceChip(
+              label: const SizedBox.shrink(),
+              selected: _selectedColor == color,
+              onSelected: (selected) {
+                if (selected) {
+                  setState(() {
+                    _selectedColor = color;
+                    _drawingController.setStyle(color: _selectedColor);
+                  });
+                }
+              },
+              backgroundColor: color,
+              selectedColor: color,
+              shape: const CircleBorder(),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildStrokeWidthSlider() {
+    return Slider(
+      value: _strokeWidth,
+      min: 1.0,
+      max: 20.0,
+      onChanged: (value) {
+        setState(() {
+          _strokeWidth = value;
+          _drawingController.setStyle(strokeWidth: _strokeWidth);
+        });
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Drawing'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.undo),
+            onPressed: () {
+              _drawingController.undo();
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.redo),
+            onPressed: () {
+              _drawingController.redo();
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: () {
+              _drawingController.clear();
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.check),
             onPressed: () async {
@@ -73,15 +149,22 @@ class _DrawingPageState extends State<DrawingPage> {
           ),
         ],
       ),
-      body: DrawingBoard(
-        controller: _drawingController,
-        background: Container(
-          width: 400,
-          height: 400,
-          color: Colors.white,
-        ),
-        showDefaultActions: true,
-        showDefaultTools: true,
+      body: Column(
+        children: [
+          _buildColorPalette(),
+          _buildStrokeWidthSlider(),
+          Expanded(
+            child: DrawingBoard(
+              controller: _drawingController,
+              background: Container(
+                width: double.infinity,
+                height: double.infinity,
+                color: Colors.white,
+              ),
+              showDefaultActions: false,
+            ),
+          ),
+        ],
       ),
     );
   }
