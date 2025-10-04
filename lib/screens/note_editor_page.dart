@@ -264,14 +264,15 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
           });
         }
       },
-      child: DrawingBoard(
-        controller: controller,
-        background: Container(
-          width: double.infinity,
-          height: 200,
-          color: Colors.grey[200],
+      child: IgnorePointer(
+        child: DrawingBoard(
+          controller: controller,
+          background: Container(
+            width: double.infinity,
+            height: 200,
+            color: Colors.grey[200],
+          ),
         ),
-        isReadOnly: true,
       ),
     );
   }
