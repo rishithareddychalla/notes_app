@@ -6,10 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:notes_app/models/note.dart';
 import 'package:notes_app/providers/note_provider.dart';
 import 'package:notes_app/screens/drawing_page.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class NoteEditorPage extends ConsumerStatefulWidget {
   final Note? note;
@@ -30,6 +32,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
   Color _noteColor = Colors.white;
   String? _drawingData;
   String? _drawingImagePath;
+  DateTime? _reminder;
 
   @override
   void initState() {
@@ -40,6 +43,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
       _imagePaths = List<String>.from(widget.note!.imagePaths);
       _drawingData = widget.note!.drawing;
       _drawingImagePath = widget.note!.drawingImagePath;
+      _reminder = widget.note!.reminder;
       _noteColor = widget.note!.themeColor != 'default'
           ? Color(int.parse(widget.note!.themeColor, radix: 16))
           : Colors.white;
@@ -120,6 +124,34 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
     );
   }
 
+  Future<void> _setReminder() async {
+    if (await Permission.notification.isDenied) {
+      await Permission.notification.request();
+    }
+
+    final now = DateTime.now();
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _reminder ?? now,
+      firstDate: now,
+      lastDate: DateTime(2101),
+    );
+
+    if (date != null) {
+      final time = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(_reminder ?? now),
+      );
+
+      if (time != null) {
+        setState(() {
+          _reminder =
+              DateTime(date.year, date.month, date.day, time.hour, time.minute);
+        });
+      }
+    }
+  }
+
   void _saveNote() {
     final title = _titleController.text;
     final notesNotifier = ref.read(notesProvider.notifier);
@@ -161,6 +193,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         themeColor: _noteColor.value.toRadixString(16),
         drawing: _drawingData,
         drawingImagePath: _drawingImagePath,
+        reminder: _reminder,
       );
       notesNotifier.addNote(newNote);
     } else {
@@ -173,6 +206,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         themeColor: _noteColor.value.toRadixString(16),
         drawing: _drawingData,
         drawingImagePath: _drawingImagePath,
+        reminder: _reminder,
       );
       notesNotifier.updateNote(updatedNote);
     }
@@ -390,6 +424,19 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                 ),
                 style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
+              if (_reminder != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Chip(
+                    label: Text(
+                        'Reminder: ${DateFormat.yMd().add_jm().format(_reminder!)}'),
+                    onDeleted: () {
+                      setState(() {
+                        _reminder = null;
+                      });
+                    },
+                  ),
+                ),
               const SizedBox(height: 16),
               _buildDrawingPreview(),
               const SizedBox(height: 16),
@@ -425,6 +472,10 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
             IconButton(
               icon: const Icon(Icons.color_lens),
               onPressed: _pickColor,
+            ),
+            IconButton(
+              icon: const Icon(Icons.alarm),
+              onPressed: _setReminder,
             ),
             IconButton(
               icon: const Icon(Icons.brush),
