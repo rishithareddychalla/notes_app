@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notes_app/providers/note_provider.dart';
-import 'package:notes_app/widgets/note_list_tile.dart';
+import 'package:notes_app/widgets/note_card.dart';
 
 class RecentlyDeletedPage extends ConsumerWidget {
   const RecentlyDeletedPage({super.key});
@@ -17,11 +17,15 @@ class RecentlyDeletedPage extends ConsumerWidget {
           ? const Center(
               child: Text('No recently deleted notes.'),
             )
-          : ListView.builder(
+          : GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.8,
+              ),
               itemCount: deletedNotes.length,
               itemBuilder: (context, index) {
                 final note = deletedNotes[index];
-                return NoteListTile(
+                return NoteCard(
                   note: note,
                   onTap: () {
                     // Show a dialog to restore or permanently delete the note
