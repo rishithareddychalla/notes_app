@@ -30,16 +30,18 @@ class NoteCard extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
               ),
               const SizedBox(height: 8),
               if (note.checklist.isNotEmpty)
-                _buildChecklistPreview(note.checklist)
+                _buildChecklistPreview(context, note.checklist)
               else
                 Text(
                   note.content,
                   maxLines: 5,
                   overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.black),
                 ),
             ],
           ),
@@ -48,7 +50,13 @@ class NoteCard extends StatelessWidget {
     );
   }
 
-  Widget _buildChecklistPreview(List<Map<String, dynamic>> checklist) {
+  Widget _buildChecklistPreview(
+      BuildContext context, List<Map<String, dynamic>> checklist) {
+    final theme = Theme.of(context);
+    final noteColor = note.themeColor != 'default'
+        ? Color(int.parse(note.themeColor, radix: 16))
+        : theme.cardColor;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: checklist.take(5).map((item) {
@@ -60,6 +68,8 @@ class NoteCard extends StatelessWidget {
               child: Checkbox(
                 value: item['checked'],
                 onChanged: null, // Make it non-interactive in preview
+                activeColor: Colors.black,
+                checkColor: noteColor,
               ),
             ),
             const SizedBox(width: 8),
@@ -69,6 +79,7 @@ class NoteCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
+                  color: Colors.black,
                   decoration: item['checked']
                       ? TextDecoration.lineThrough
                       : TextDecoration.none,

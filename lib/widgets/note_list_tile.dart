@@ -14,13 +14,17 @@ class NoteListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      title: Text(note.title),
+      title: Text(
+        note.title,
+        style: const TextStyle(color: Colors.black),
+      ),
       subtitle: note.checklist.isNotEmpty
           ? _buildChecklistPreview(note.checklist)
           : Text(
               note.content,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.black),
             ),
       onTap: onTap,
     );
@@ -35,6 +39,7 @@ class NoteListTile extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
+            color: Colors.black,
             decoration: item['checked']
                 ? TextDecoration.lineThrough
                 : TextDecoration.none,
