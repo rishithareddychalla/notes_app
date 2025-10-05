@@ -13,7 +13,11 @@ class NoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = note.themeColor != 'default'
+        ? Color(int.parse(note.themeColor, radix: 16))
+        : Theme.of(context).cardColor;
     return Card(
+      color: color,
       child: InkWell(
         onTap: onTap,
         child: Padding(
