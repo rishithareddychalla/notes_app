@@ -3,13 +3,13 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:notes_app/models/note.dart';
 import 'package:notes_app/providers/note_provider.dart';
 import 'package:notes_app/screens/drawing_page.dart';
+import 'package:notes_app/utils/colors.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -29,7 +29,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
   List<Map<String, dynamic>> _checklistItems = [];
   final List<TextEditingController> _checklistItemControllers = [];
   List<String> _imagePaths = [];
-  Color _noteColor = Colors.white;
+  Color _noteColor = noteColors.first;
   String? _drawingData;
   String? _drawingImagePath;
   DateTime? _reminder;
@@ -101,25 +101,35 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Pick a color'),
-        content: SingleChildScrollView(
-          child: ColorPicker(
-            pickerColor: _noteColor,
-            onColorChanged: (color) {
-              setState(() {
-                _noteColor = color;
-              });
+        content: SizedBox(
+          width: double.maxFinite,
+          child: GridView.builder(
+            shrinkWrap: true,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              crossAxisSpacing: 8.0,
+              mainAxisSpacing: 8.0,
+            ),
+            itemCount: noteColors.length,
+            itemBuilder: (context, index) {
+              final color = noteColors[index];
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _noteColor = color;
+                  });
+                  Navigator.of(context).pop();
+                },
+                child: CircleAvatar(
+                  backgroundColor: color,
+                  child: _noteColor == color
+                      ? const Icon(Icons.check, color: Colors.black)
+                      : null,
+                ),
+              );
             },
-            pickerAreaHeightPercent: 0.8,
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('Done'),
-          ),
-        ],
       ),
     );
   }
@@ -181,6 +191,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
       Navigator.pop(context);
       return;
     }
+    final themeColorString = _noteColor.value.toRadixString(16);
 
     if (widget.note == null) {
       // Add new note
@@ -190,7 +201,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         creationDate: DateTime.now(),
         checklist: checklist,
         imagePaths: _imagePaths,
-        themeColor: _noteColor.value.toRadixString(16),
+        themeColor: themeColorString,
         drawing: _drawingData,
         drawingImagePath: _drawingImagePath,
         reminder: _reminder,
@@ -203,7 +214,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         content: content,
         checklist: checklist,
         imagePaths: _imagePaths,
-        themeColor: _noteColor.value.toRadixString(16),
+        themeColor: themeColorString,
         drawing: _drawingData,
         drawingImagePath: _drawingImagePath,
         reminder: _reminder,
@@ -371,6 +382,17 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         backgroundColor: _noteColor,
         elevation: 0,
         title: Text(widget.note == null ? 'New Note' : 'Edit Note'),
+        iconTheme: IconThemeData(
+          color: ThemeData.estimateBrightnessForColor(_noteColor) == Brightness.dark ? Colors.white : Colors.black,
+        ),
+        actionsIconTheme: IconThemeData(
+          color: ThemeData.estimateBrightnessForColor(_noteColor) == Brightness.dark ? Colors.white : Colors.black,
+        ),
+        titleTextStyle: TextStyle(
+          color: ThemeData.estimateBrightnessForColor(_noteColor) == Brightness.dark ? Colors.white : Colors.black,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
