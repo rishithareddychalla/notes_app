@@ -13,20 +13,27 @@ class NoteListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(
-        note.title,
-        style: const TextStyle(color: Colors.black),
+    final color = note.themeColor != 'default'
+        ? Color(int.parse(note.themeColor, radix: 16))
+        : Theme.of(context).cardColor;
+    return Card(
+      color: color,
+      margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+      child: ListTile(
+        title: Text(
+          note.title,
+          style: const TextStyle(color: Colors.black),
+        ),
+        subtitle: note.checklist.isNotEmpty
+            ? _buildChecklistPreview(note.checklist)
+            : Text(
+                note.content,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.black),
+              ),
+        onTap: onTap,
       ),
-      subtitle: note.checklist.isNotEmpty
-          ? _buildChecklistPreview(note.checklist)
-          : Text(
-              note.content,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: Colors.black),
-            ),
-      onTap: onTap,
     );
   }
 
