@@ -21,6 +21,16 @@ class HomePage extends ConsumerWidget {
         title: const Text('Notes'),
         actions: [
           IconButton(
+            icon: Icon(
+              noteView == NoteView.grid ? Icons.view_list : Icons.view_module,
+            ),
+            onPressed: () {
+              ref.read(settingsProvider.notifier).updateNoteView(
+                    noteView == NoteView.grid ? NoteView.list : NoteView.grid,
+                  );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
               // TODO: Implement search functionality
@@ -32,7 +42,8 @@ class HomePage extends ConsumerWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => const RecentlyDeletedPage()),
+                  builder: (context) => const RecentlyDeletedPage(),
+                ),
               );
             },
           ),
