@@ -49,7 +49,7 @@ class RecentlyDeletedPage extends ConsumerWidget {
         actions: [
           IconButton(
             icon: Icon(
-              noteView == NoteView.grid ? Icons.view_list : Icons.view_module,
+              noteView == NoteView.grid ? Icons.view_module : Icons.view_list,
             ),
             onPressed: () {
               ref.read(settingsProvider.notifier).updateNoteView(
