@@ -65,6 +65,25 @@ class NotesNotifier extends StateNotifier<List<Note>> {
       ref.read(notificationServiceProvider).cancelNotification(note.id.hashCode);
     }
   }
+
+  void deleteMultipleNotes(Set<String> noteIds) {
+    final notesToDelete = state.where((note) => noteIds.contains(note.id)).toList();
+    state = state.where((note) => !noteIds.contains(note.id)).toList();
+    _saveNotes();
+
+    final now = DateTime.now();
+    final deletedNotesWithTimestamp =
+        notesToDelete.map((note) => note.copyWith(deletionDate: now)).toList();
+    ref
+        .read(deletedNotesProvider.notifier)
+        .addMultipleNotes(deletedNotesWithTimestamp);
+
+    for (final note in notesToDelete) {
+      if (note.reminder != null) {
+        ref.read(notificationServiceProvider).cancelNotification(note.id.hashCode);
+      }
+    }
+  }
 }
 
 final notesProvider = StateNotifierProvider<NotesNotifier, List<Note>>((ref) {
@@ -93,6 +112,11 @@ class DeletedNotesNotifier extends StateNotifier<List<Note>> {
 
   void addNote(Note note) {
     state = [...state, note];
+    _saveDeletedNotes();
+  }
+
+  void addMultipleNotes(List<Note> notes) {
+    state = [...state, ...notes];
     _saveDeletedNotes();
   }
 
