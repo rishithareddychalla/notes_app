@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notes_app/providers/note_provider.dart';
+import 'package:notes_app/providers/settings_provider.dart';
 import 'package:notes_app/widgets/note_card.dart';
+import 'package:notes_app/widgets/note_list_tile.dart';
 
 class RecentlyDeletedPage extends ConsumerWidget {
   const RecentlyDeletedPage({super.key});
@@ -9,58 +11,81 @@ class RecentlyDeletedPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final deletedNotes = ref.watch(deletedNotesProvider);
+    final noteView = ref.watch(noteViewProvider);
+
+    final emptyNotesWidget = Center(
+      child: Text('No recently deleted notes.'),
+    );
+
+    final restoreOrDeleteDialog = (note) => showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Restore Note'),
+            content: const Text('What would you like to do with this note?'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  ref.read(deletedNotesProvider.notifier).restoreNote(note);
+                  Navigator.pop(context);
+                },
+                child: const Text('Restore'),
+              ),
+              TextButton(
+                onPressed: () {
+                  ref
+                      .read(deletedNotesProvider.notifier)
+                      .permanentlyDeleteNote(note);
+                  Navigator.pop(context);
+                },
+                child: const Text('Delete Permanently'),
+              ),
+            ],
+          ),
+        );
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Recently Deleted'),
+        actions: [
+          IconButton(
+            icon: Icon(
+              noteView == NoteView.grid ? Icons.view_list : Icons.view_module,
+            ),
+            onPressed: () {
+              ref.read(settingsProvider.notifier).updateNoteView(
+                    noteView == NoteView.grid ? NoteView.list : NoteView.grid,
+                  );
+            },
+          ),
+        ],
       ),
       body: deletedNotes.isEmpty
-          ? const Center(
-              child: Text('No recently deleted notes.'),
-            )
-          : GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.8,
-              ),
-              itemCount: deletedNotes.length,
-              itemBuilder: (context, index) {
-                final note = deletedNotes[index];
-                return NoteCard(
-                  note: note,
-                  onTap: () {
-                    // Show a dialog to restore or permanently delete the note
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Restore Note'),
-                        content: const Text(
-                            'What would you like to do with this note?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              ref
-                                  .read(deletedNotesProvider.notifier)
-                                  .restoreNote(note);
-                              Navigator.pop(context);
-                            },
-                            child: const Text('Restore'),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              ref
-                                  .read(deletedNotesProvider.notifier)
-                                  .permanentlyDeleteNote(note);
-                              Navigator.pop(context);
-                            },
-                            child: const Text('Delete Permanently'),
-                          ),
-                        ],
-                      ),
+          ? emptyNotesWidget
+          : noteView == NoteView.grid
+              ? GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.8,
+                  ),
+                  itemCount: deletedNotes.length,
+                  itemBuilder: (context, index) {
+                    final note = deletedNotes[index];
+                    return NoteCard(
+                      note: note,
+                      onTap: () => restoreOrDeleteDialog(note),
                     );
                   },
-                );
-              },
-            ),
+                )
+              : ListView.builder(
+                  itemCount: deletedNotes.length,
+                  itemBuilder: (context, index) {
+                    final note = deletedNotes[index];
+                    return NoteListTile(
+                      note: note,
+                      onTap: () => restoreOrDeleteDialog(note),
+                    );
+                  },
+                ),
     );
   }
 }
