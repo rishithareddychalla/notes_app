@@ -248,7 +248,8 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         if (index == _checklistItems.length) {
           return ListTile(
             leading: const Icon(Icons.add, color: Colors.black),
-            title: const Text('Add item', style: TextStyle(color: Colors.black)),
+            title:
+                const Text('Add item', style: TextStyle(color: Colors.black)),
             onTap: _addChecklistItem,
           );
         }
@@ -408,8 +409,8 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                   context: context,
                   builder: (context) => AlertDialog(
                     title: const Text('Delete Note'),
-                    content:
-                        const Text('Are you sure you want to delete this note?'),
+                    content: const Text(
+                        'Are you sure you want to delete this note?'),
                     actions: [
                       TextButton(
                         onPressed: () {
@@ -446,7 +447,10 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                   hintText: 'Title',
                   border: InputBorder.none,
                 ),
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    fontSize: 24,
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold),
               ),
               if (_reminder != null)
                 Padding(
@@ -517,8 +521,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                   _drawingData = result['json'];
                   final imageBytes = result['image'] as Uint8List?;
                   if (imageBytes != null) {
-                    final directory =
-                        await getApplicationDocumentsDirectory();
+                    final directory = await getApplicationDocumentsDirectory();
                     final path =
                         '${directory.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png';
                     final file = File(path);
