@@ -7,6 +7,7 @@ import 'package:notes_app/screens/recently_deleted_page.dart';
 import 'package:notes_app/screens/settings_page.dart';
 import 'package:notes_app/widgets/note_card.dart';
 import 'package:notes_app/widgets/note_list_tile.dart';
+import 'package:notes_app/widgets/note_search_delegate.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -33,7 +34,10 @@ class HomePage extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              // TODO: Implement search functionality
+              showSearch(
+                context: context,
+                delegate: NoteSearchDelegate(ref),
+              );
             },
           ),
           IconButton(
