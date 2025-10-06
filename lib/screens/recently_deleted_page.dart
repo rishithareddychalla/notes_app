@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notes_app/providers/note_provider.dart';
 import 'package:notes_app/providers/settings_provider.dart';
+import 'package:notes_app/widgets/deleted_note_search_delegate.dart';
 import 'package:notes_app/widgets/note_card.dart';
 import 'package:notes_app/widgets/note_list_tile.dart';
 
@@ -55,6 +56,15 @@ class RecentlyDeletedPage extends ConsumerWidget {
               ref.read(settingsProvider.notifier).updateNoteView(
                     noteView == NoteView.grid ? NoteView.list : NoteView.grid,
                   );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              showSearch(
+                context: context,
+                delegate: DeletedNoteSearchDelegate(ref),
+              );
             },
           ),
         ],
