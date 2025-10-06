@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notes_app/providers/note_provider.dart';
+import 'package:notes_app/providers/selection_provider.dart';
 import 'package:notes_app/providers/settings_provider.dart';
 import 'package:notes_app/screens/note_editor_page.dart';
 import 'package:notes_app/screens/recently_deleted_page.dart';
@@ -16,52 +17,101 @@ class HomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notes = ref.watch(notesProvider);
     final noteView = ref.watch(noteViewProvider);
+    final selection = ref.watch(selectionProvider);
+    final selectionNotifier = ref.read(selectionProvider.notifier);
+
+    void handleNoteTap(String noteId) {
+      if (selection.isSelectionMode) {
+        selectionNotifier.toggleNoteSelection(noteId);
+      } else {
+        final note = notes.firstWhere((note) => note.id == noteId);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => NoteEditorPage(note: note),
+          ),
+        );
+      }
+    }
+
+    void handleNoteLongPress(String noteId) {
+      if (!selection.isSelectionMode) {
+        selectionNotifier.enableSelectionMode();
+      }
+      selectionNotifier.toggleNoteSelection(noteId);
+    }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notes'),
-        actions: [
-          IconButton(
-            icon: Icon(
-              noteView == NoteView.grid ? Icons.view_module : Icons.view_list,
-            ),
-            onPressed: () {
-              ref.read(settingsProvider.notifier).updateNoteView(
-                    noteView == NoteView.grid ? NoteView.list : NoteView.grid,
-                  );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              showSearch(
-                context: context,
-                delegate: NoteSearchDelegate(ref),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const RecentlyDeletedPage(),
+      appBar: selection.isSelectionMode
+          ? AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () {
+                  selectionNotifier.disableSelectionMode();
+                },
+              ),
+              title: Text('${selection.selectedNotes.length} selected'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () {
+                    ref
+                        .read(notesProvider.notifier)
+                        .deleteMultipleNotes(selection.selectedNotes);
+                    selectionNotifier.disableSelectionMode();
+                  },
                 ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsPage()),
-              );
-            },
-          ),
-        ],
-      ),
+              ],
+            )
+          : AppBar(
+              title: const Text('Notes'),
+              actions: [
+                IconButton(
+                  icon: Icon(
+                    noteView == NoteView.grid
+                        ? Icons.view_module
+                        : Icons.view_list,
+                  ),
+                  onPressed: () {
+                    ref.read(settingsProvider.notifier).updateNoteView(
+                          noteView == NoteView.grid
+                              ? NoteView.list
+                              : NoteView.grid,
+                        );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () {
+                    showSearch(
+                      context: context,
+                      delegate: NoteSearchDelegate(ref),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RecentlyDeletedPage(),
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.settings),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const SettingsPage()),
+                    );
+                  },
+                ),
+              ],
+            ),
       body: notes.isEmpty
           ? const Center(
               child: Text('No notes yet. Create one!'),
@@ -79,14 +129,9 @@ class HomePage extends ConsumerWidget {
                     final note = notes[index];
                     return NoteCard(
                       note: note,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => NoteEditorPage(note: note),
-                          ),
-                        );
-                      },
+                      isSelected: selectionNotifier.isSelected(note.id),
+                      onTap: () => handleNoteTap(note.id),
+                      onLongPress: () => handleNoteLongPress(note.id),
                     );
                   },
                 )
@@ -96,26 +141,24 @@ class HomePage extends ConsumerWidget {
                     final note = notes[index];
                     return NoteListTile(
                       note: note,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => NoteEditorPage(note: note),
-                          ),
-                        );
-                      },
+                      isSelected: selectionNotifier.isSelected(note.id),
+                      onTap: () => handleNoteTap(note.id),
+                      onLongPress: () => handleNoteLongPress(note.id),
                     );
                   },
                 ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const NoteEditorPage()),
-          );
-        },
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: selection.isSelectionMode
+          ? null
+          : FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const NoteEditorPage()),
+                );
+              },
+              child: const Icon(Icons.add),
+            ),
     );
   }
 }

@@ -3,12 +3,16 @@ import 'package:notes_app/models/note.dart';
 
 class NoteCard extends StatelessWidget {
   final Note note;
+  final bool isSelected;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
 
   const NoteCard({
     super.key,
     required this.note,
+    required this.isSelected,
     required this.onTap,
+    required this.onLongPress,
   });
 
   @override
@@ -16,35 +20,49 @@ class NoteCard extends StatelessWidget {
     final color = note.themeColor != 'default'
         ? Color(int.parse(note.themeColor, radix: 16))
         : Theme.of(context).cardColor;
-    return Card(
-      color: color,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                note.title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+    return GestureDetector(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      child: Card(
+        color: isSelected ? Colors.blue.withOpacity(0.5) : color,
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    note.title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (note.checklist.isNotEmpty)
+                    _buildChecklistPreview(context, note.checklist)
+                  else
+                    Text(
+                      note.content,
+                      maxLines: 5,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              const Positioned(
+                top: 4,
+                right: 4,
+                child: Icon(
+                  Icons.check_circle,
+                  color: Colors.white,
                 ),
               ),
-              const SizedBox(height: 8),
-              if (note.checklist.isNotEmpty)
-                _buildChecklistPreview(context, note.checklist)
-              else
-                Text(
-                  note.content,
-                  maxLines: 5,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.black),
-                ),
-            ],
-          ),
+          ],
         ),
       ),
     );
