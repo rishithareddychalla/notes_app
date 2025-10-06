@@ -8,6 +8,7 @@ class SettingsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final themeMode = ref.watch(settingsProvider);
     final noteView = ref.watch(noteViewProvider);
 
@@ -15,47 +16,95 @@ class SettingsPage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Settings'),
       ),
-      body: ListView(
-        children: [
-          ListTile(
-            title: const Text('Dark Mode'),
-            trailing: Switch(
-              value: themeMode == ThemeMode.dark,
-              onChanged: (value) {
-                ref
-                    .read(settingsProvider.notifier)
-                    .updateThemeMode(value ? ThemeMode.dark : ThemeMode.light);
-              },
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView(
+          children: [
+            Text(
+              'Appearance',
+              style: theme.textTheme.headlineMedium
+                  ?.copyWith(color: theme.primaryColor),
             ),
-          ),
-          ListTile(
-            title: const Text('Recently Deleted'),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const RecentlyDeletedPage(),
+            const SizedBox(height: 16),
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ListTile(
+                leading: const Icon(Icons.dark_mode),
+                title: Text(
+                  'Dark Mode',
+                  style: theme.textTheme.bodyLarge,
                 ),
-              );
-            },
-          ),
-          ListTile(
-            title: const Text('Note View'),
-            trailing: SegmentedButton<NoteView>(
-              segments: const [
-                ButtonSegment(value: NoteView.grid, icon: Icon(Icons.grid_view)),
-                ButtonSegment(value: NoteView.list, icon: Icon(Icons.view_list)),
-              ],
-              selected: {noteView},
-              onSelectionChanged: (newSelection) {
-                ref
-                    .read(settingsProvider.notifier)
-                    .updateNoteView(newSelection.first);
-              },
+                trailing: Switch(
+                  value: themeMode == ThemeMode.dark,
+                  onChanged: (value) {
+                    ref.read(settingsProvider.notifier).updateThemeMode(
+                        value ? ThemeMode.dark : ThemeMode.light);
+                  },
+                ),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ListTile(
+                leading: const Icon(Icons.view_list),
+                title: Text(
+                  'Note View',
+                  style: theme.textTheme.bodyLarge,
+                ),
+                trailing: SegmentedButton<NoteView>(
+                  segments: const [
+                    ButtonSegment(
+                        value: NoteView.grid, icon: Icon(Icons.grid_view)),
+                    ButtonSegment(
+                        value: NoteView.list, icon: Icon(Icons.view_list)),
+                  ],
+                  selected: {noteView},
+                  onSelectionChanged: (newSelection) {
+                    ref
+                        .read(settingsProvider.notifier)
+                        .updateNoteView(newSelection.first);
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+            Text(
+              'Other',
+              style: theme.textTheme.headlineMedium
+                  ?.copyWith(color: theme.primaryColor),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ListTile(
+                leading: const Icon(Icons.delete_forever),
+                title: Text(
+                  'Recently Deleted',
+                  style: theme.textTheme.bodyLarge,
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const RecentlyDeletedPage(),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -226,9 +225,10 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
   }
 
   Widget _buildTextEditor() {
+    final theme = Theme.of(context);
     return TextField(
       controller: _contentController,
-      style: const TextStyle(color: Colors.black),
+      style: theme.textTheme.bodyLarge?.copyWith(color: Colors.black),
       decoration: const InputDecoration(
         hintText: 'Content',
         border: InputBorder.none,
@@ -240,6 +240,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
   }
 
   Widget _buildChecklistEditor() {
+    final theme = Theme.of(context);
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -248,8 +249,9 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         if (index == _checklistItems.length) {
           return ListTile(
             leading: const Icon(Icons.add, color: Colors.black),
-            title:
-                const Text('Add item', style: TextStyle(color: Colors.black)),
+            title: Text('Add item',
+                style: theme.textTheme.bodyLarge
+                    ?.copyWith(color: Colors.black)),
             onTap: _addChecklistItem,
           );
         }
@@ -268,7 +270,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
             Expanded(
               child: TextField(
                 controller: _checklistItemControllers[index],
-                style: TextStyle(
+                style: theme.textTheme.bodyLarge?.copyWith(
                   color: Colors.black,
                   decoration: _checklistItems[index]['checked']
                       ? TextDecoration.lineThrough
@@ -322,16 +324,19 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
               }
             }
           },
-          child: Image.file(
-            File(_drawingImagePath!),
-            width: double.infinity,
-            height: 200,
-            fit: BoxFit.contain,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.file(
+              File(_drawingImagePath!),
+              width: double.infinity,
+              height: 200,
+              fit: BoxFit.contain,
+            ),
           ),
         ),
         Positioned(
-          top: -10,
-          right: -10,
+          top: 0,
+          right: 0,
           child: IconButton(
             icon: const Icon(Icons.remove_circle, color: Colors.red),
             onPressed: () {
@@ -352,30 +357,33 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
-        crossAxisSpacing: 4.0,
-        mainAxisSpacing: 4.0,
+        crossAxisSpacing: 8.0,
+        mainAxisSpacing: 8.0,
       ),
       itemCount: _imagePaths.length,
       itemBuilder: (context, index) {
-        return Stack(
-          children: [
-            Image.file(File(_imagePaths[index]),
-                width: double.infinity,
-                height: double.infinity,
-                fit: BoxFit.cover),
-            Positioned(
-              top: -10,
-              right: -10,
-              child: IconButton(
-                icon: const Icon(Icons.remove_circle, color: Colors.red),
-                onPressed: () {
-                  setState(() {
-                    _imagePaths.removeAt(index);
-                  });
-                },
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
+            children: [
+              Image.file(File(_imagePaths[index]),
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.cover),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: IconButton(
+                  icon: const Icon(Icons.remove_circle, color: Colors.red),
+                  onPressed: () {
+                    setState(() {
+                      _imagePaths.removeAt(index);
+                    });
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
@@ -383,19 +391,17 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: _noteColor,
       appBar: AppBar(
         backgroundColor: _noteColor,
         elevation: 0,
-        title: Text(widget.note == null ? 'New Note' : 'Edit Note'),
+        title: Text(widget.note == null ? 'New Note' : 'Edit Note',
+            style: theme.textTheme.headlineMedium
+                ?.copyWith(color: Colors.black)),
         iconTheme: const IconThemeData(color: Colors.black),
         actionsIconTheme: const IconThemeData(color: Colors.black),
-        titleTextStyle: const TextStyle(
-          color: Colors.black,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
@@ -447,10 +453,8 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                   hintText: 'Title',
                   border: InputBorder.none,
                 ),
-                style: const TextStyle(
-                    fontSize: 24,
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold),
+                style: theme.textTheme.headlineLarge
+                    ?.copyWith(color: Colors.black),
               ),
               if (_reminder != null)
                 Padding(
@@ -480,60 +484,74 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
       bottomNavigationBar: BottomAppBar(
         color: _noteColor,
         elevation: 0,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            IconButton(
-              icon: Icon(
-                _isChecklist ? Icons.notes : Icons.check_box_outline_blank,
-                color: Colors.black,
+        child: Container(
+          decoration: BoxDecoration(
+            color: theme.bottomAppBarTheme.backgroundColor,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              IconButton(
+                icon: Icon(
+                  _isChecklist ? Icons.notes : Icons.check_box_outline_blank,
+                  color: theme.bottomAppBarTheme.unselectedItemColor,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isChecklist = !_isChecklist;
+                  });
+                },
               ),
-              onPressed: () {
-                setState(() {
-                  _isChecklist = !_isChecklist;
-                });
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.image, color: Colors.black),
-              onPressed: _pickImage,
-            ),
-            IconButton(
-              icon: const Icon(Icons.color_lens, color: Colors.black),
-              onPressed: _pickColor,
-            ),
-            IconButton(
-              icon: const Icon(Icons.alarm, color: Colors.black),
-              onPressed: _setReminder,
-            ),
-            IconButton(
-              icon: const Icon(Icons.brush, color: Colors.black),
-              onPressed: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        DrawingPage(drawingData: _drawingData),
-                  ),
-                );
+              IconButton(
+                icon: Icon(Icons.image,
+                    color: theme.bottomAppBarTheme.unselectedItemColor),
+                onPressed: _pickImage,
+              ),
+              IconButton(
+                icon: Icon(Icons.color_lens,
+                    color: theme.bottomAppBarTheme.unselectedItemColor),
+                onPressed: _pickColor,
+              ),
+              IconButton(
+                icon: Icon(Icons.alarm,
+                    color: theme.bottomAppBarTheme.unselectedItemColor),
+                onPressed: _setReminder,
+              ),
+              IconButton(
+                icon: Icon(Icons.brush,
+                    color: theme.bottomAppBarTheme.unselectedItemColor),
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          DrawingPage(drawingData: _drawingData),
+                    ),
+                  );
 
-                if (result != null) {
-                  _drawingData = result['json'];
-                  final imageBytes = result['image'] as Uint8List?;
-                  if (imageBytes != null) {
-                    final directory = await getApplicationDocumentsDirectory();
-                    final path =
-                        '${directory.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png';
-                    final file = File(path);
-                    await file.writeAsBytes(imageBytes);
-                    setState(() {
-                      _drawingImagePath = path;
-                    });
+                  if (result != null) {
+                    _drawingData = result['json'];
+                    final imageBytes = result['image'] as Uint8List?;
+                    if (imageBytes != null) {
+                      final directory =
+                          await getApplicationDocumentsDirectory();
+                      final path =
+                          '${directory.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png';
+                      final file = File(path);
+                      await file.writeAsBytes(imageBytes);
+                      setState(() {
+                        _drawingImagePath = path;
+                      });
+                    }
                   }
-                }
-              },
-            ),
-          ],
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

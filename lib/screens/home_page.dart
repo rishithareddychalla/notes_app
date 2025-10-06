@@ -63,16 +63,31 @@ class HomePage extends ConsumerWidget {
         ],
       ),
       body: notes.isEmpty
-          ? const Center(
-              child: Text('No notes yet. Create one!'),
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.note_add,
+                    size: 80,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No notes yet. Create one!',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                ],
+              ),
             )
           : noteView == NoteView.grid
               ? GridView.builder(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(16.0),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    crossAxisSpacing: 8.0,
-                    mainAxisSpacing: 8.0,
+                    crossAxisSpacing: 16.0,
+                    mainAxisSpacing: 16.0,
+                    childAspectRatio: 0.8,
                   ),
                   itemCount: notes.length,
                   itemBuilder: (context, index) {
@@ -91,6 +106,7 @@ class HomePage extends ConsumerWidget {
                   },
                 )
               : ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
                   itemCount: notes.length,
                   itemBuilder: (context, index) {
                     final note = notes[index];

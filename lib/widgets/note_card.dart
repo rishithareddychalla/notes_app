@@ -13,25 +13,32 @@ class NoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final color = note.themeColor != 'default'
         ? Color(int.parse(note.themeColor, radix: 16))
-        : Theme.of(context).cardColor;
+        : theme.cardColor;
+
     return Card(
       color: color,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      elevation: 4,
       child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 note.title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                style: theme.textTheme.headlineMedium?.copyWith(
                   color: Colors.black,
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 8),
               if (note.checklist.isNotEmpty)
@@ -41,7 +48,9 @@ class NoteCard extends StatelessWidget {
                   note.content,
                   maxLines: 5,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.black),
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: Colors.black87,
+                  ),
                 ),
             ],
           ),
@@ -67,7 +76,7 @@ class NoteCard extends StatelessWidget {
               width: 24,
               child: Checkbox(
                 value: item['checked'],
-                onChanged: null, // Make it non-interactive in preview
+                onChanged: null,
                 activeColor: Colors.black,
                 checkColor: noteColor,
               ),
@@ -78,7 +87,7 @@ class NoteCard extends StatelessWidget {
                 item['text'],
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
+                style: theme.textTheme.bodyMedium?.copyWith(
                   color: Colors.black,
                   decoration: item['checked']
                       ? TextDecoration.lineThrough
