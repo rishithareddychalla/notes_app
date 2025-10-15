@@ -54,7 +54,7 @@ class DeletedNoteSearchDelegate extends SearchDelegate<Note?> {
           note: note,
           onTap: () {
             _showRestoreOrDeleteDialog(context, note);
-          },
+          }, isSelected: false, onLongPress: () {  },
         );
       },
     );
@@ -83,7 +83,7 @@ class DeletedNoteSearchDelegate extends SearchDelegate<Note?> {
           note: note,
           onTap: () {
             _showRestoreOrDeleteDialog(context, note);
-          },
+          }, isSelected: false, onLongPress: () {  },
         );
       },
     );
