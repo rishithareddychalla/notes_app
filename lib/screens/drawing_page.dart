@@ -75,10 +75,10 @@ class _DrawingPageState extends State<DrawingPage> {
       ),
       body: DrawingBoard(
         controller: _drawingController,
-        background: Container(
-          width: 400,
-          height: 400,
-          color: Colors.white,
+        background: SizedBox.expand(
+          child: Container(
+            color: Colors.white,
+          ),
         ),
         showDefaultActions: true,
         showDefaultTools: true,
