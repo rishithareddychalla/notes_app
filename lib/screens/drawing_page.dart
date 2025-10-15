@@ -56,6 +56,10 @@ class _DrawingPageState extends State<DrawingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final iconColor =
+        theme.brightness == Brightness.dark ? Colors.white : Colors.black;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Drawing'),
@@ -82,6 +86,8 @@ class _DrawingPageState extends State<DrawingPage> {
         ),
         showDefaultActions: true,
         showDefaultTools: true,
+        actionColor: iconColor,
+        toolbarColor: iconColor,
       ),
     );
   }
