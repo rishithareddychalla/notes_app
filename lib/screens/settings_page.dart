@@ -20,6 +20,8 @@ class SettingsPage extends ConsumerWidget {
           ListTile(
             title: const Text('Dark Mode'),
             trailing: Switch(
+              inactiveThumbColor: Colors.black,
+              inactiveTrackColor: Color(0xFF82CFFD),
               value: themeMode == ThemeMode.dark,
               onChanged: (value) {
                 ref
@@ -44,8 +46,10 @@ class SettingsPage extends ConsumerWidget {
             title: const Text('Note View'),
             trailing: SegmentedButton<NoteView>(
               segments: const [
-                ButtonSegment(value: NoteView.grid, icon: Icon(Icons.grid_view)),
-                ButtonSegment(value: NoteView.list, icon: Icon(Icons.view_list)),
+                ButtonSegment(
+                    value: NoteView.grid, icon: Icon(Icons.grid_view)),
+                ButtonSegment(
+                    value: NoteView.list, icon: Icon(Icons.view_list)),
               ],
               selected: {noteView},
               onSelectionChanged: (newSelection) {
