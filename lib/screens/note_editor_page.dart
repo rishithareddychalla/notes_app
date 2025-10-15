@@ -33,30 +33,37 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
   String? _drawingData;
   String? _drawingImagePath;
   DateTime? _reminder;
+  bool _isInitialized = false;
+
+  Color get _textColor =>
+      _noteColor.computeLuminance() > 0.5 ? Colors.black : Colors.white;
 
   @override
-  void initState() {
-    super.initState();
-    if (widget.note != null) {
-      _titleController.text = widget.note!.title;
-      _contentController.text = widget.note!.content;
-      _imagePaths = List<String>.from(widget.note!.imagePaths);
-      _drawingData = widget.note!.drawing;
-      _drawingImagePath = widget.note!.drawingImagePath;
-      _reminder = widget.note!.reminder;
-      _noteColor = widget.note!.themeColor != 'default'
-          ? Color(int.parse(widget.note!.themeColor, radix: 16))
-          : Theme.of(context).cardColor;
-      if (widget.note!.checklist.isNotEmpty) {
-        setState(() {
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInitialized) {
+      if (widget.note != null) {
+        _titleController.text = widget.note!.title;
+        _contentController.text = widget.note!.content;
+        _imagePaths = List<String>.from(widget.note!.imagePaths);
+        _drawingData = widget.note!.drawing;
+        _drawingImagePath = widget.note!.drawingImagePath;
+        _reminder = widget.note!.reminder;
+        _noteColor = widget.note!.themeColor != 'default'
+            ? Color(int.parse(widget.note!.themeColor, radix: 16))
+            : Theme.of(context).cardColor;
+        if (widget.note!.checklist.isNotEmpty) {
           _isChecklist = true;
           _checklistItems =
               List<Map<String, dynamic>>.from(widget.note!.checklist);
           _checklistItemControllers.addAll(_checklistItems
               .map((item) => TextEditingController(text: item['text']))
               .toList());
-        });
+        }
+      } else {
+        _noteColor = Theme.of(context).cardColor;
       }
+      _isInitialized = true;
     }
   }
 
@@ -86,13 +93,13 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      setState(() {
-        _imagePaths.add(pickedFile.path);
-      });
+    final permission = await Permission.photos.request();
+    if (permission.isGranted) {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        setState(() => _imagePaths.add(pickedFile.path));
+      }
     }
   }
 
@@ -122,13 +129,8 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                 },
                 child: CircleAvatar(
                   backgroundColor: color,
-                  child: _noteColor == color
-                      ? Icon(
-                          Icons.check,
-                          color: theme.brightness == Brightness.dark
-                              ? Colors.white
-                              : Colors.black,
-                        )
+                  child: _noteColor.value == color.value
+                      ? Icon(Icons.check, color: _textColor)
                       : null,
                 ),
               );
@@ -185,38 +187,23 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
       content = _contentController.text;
     }
 
-    if (title.isEmpty &&
-        content.isEmpty &&
-        checklist.isEmpty &&
+    final isNewNote = widget.note == null;
+    final isNoteEmpty = title.isEmpty &&
+        (_isChecklist ? checklist.isEmpty : content.isEmpty) &&
         _imagePaths.isEmpty &&
-        _drawingData == null) {
-      if (widget.note != null) {
+        _drawingData == null;
+
+    if (isNoteEmpty) {
+      if (!isNewNote) {
         notesNotifier.deleteNote(widget.note!);
       }
-      Navigator.pop(context);
-      return;
-    }
-    final themeColorString = _noteColor.value.toRadixString(16);
-
-    if (widget.note == null) {
-      // Add new note
-      final newNote = Note(
-        title: title,
-        content: content,
-        creationDate: DateTime.now(),
-        checklist: checklist,
-        imagePaths: _imagePaths,
-        themeColor: themeColorString,
-        drawing: _drawingData,
-        drawingImagePath: _drawingImagePath,
-        reminder: _reminder,
-      );
-      notesNotifier.addNote(newNote);
     } else {
-      // Update existing note
-      final updatedNote = widget.note!.copyWith(
+      final themeColorString = _noteColor.value.toRadixString(16);
+      final note = Note(
+        id: isNewNote ? null : widget.note!.id,
         title: title,
         content: content,
+        creationDate: isNewNote ? DateTime.now() : widget.note!.creationDate,
         checklist: checklist,
         imagePaths: _imagePaths,
         themeColor: themeColorString,
@@ -224,24 +211,25 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         drawingImagePath: _drawingImagePath,
         reminder: _reminder,
       );
-      notesNotifier.updateNote(updatedNote);
+
+      if (isNewNote) {
+        notesNotifier.addNote(note);
+      } else {
+        notesNotifier.updateNote(note);
+      }
     }
 
     Navigator.pop(context);
   }
 
   Widget _buildTextEditor() {
-    final theme = Theme.of(context);
-    final textColor =
-        theme.brightness == Brightness.dark ? Colors.white : Colors.black;
-
     return TextField(
       controller: _contentController,
-      style: TextStyle(color: textColor),
+      style: TextStyle(color: _textColor),
       decoration: InputDecoration(
         hintText: 'Content',
         border: InputBorder.none,
-        hintStyle: TextStyle(color: textColor.withOpacity(0.6)),
+        hintStyle: TextStyle(color: _textColor.withOpacity(0.6)),
       ),
       maxLines: null,
       keyboardType: TextInputType.multiline,
@@ -249,11 +237,6 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
   }
 
   Widget _buildChecklistEditor() {
-    final theme = Theme.of(context);
-    final textColor =
-        theme.brightness == Brightness.dark ? Colors.white : Colors.black;
-    final hintColor = textColor.withOpacity(0.6);
-
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -261,8 +244,8 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
       itemBuilder: (context, index) {
         if (index == _checklistItems.length) {
           return ListTile(
-            leading: Icon(Icons.add, color: textColor),
-            title: Text('Add item', style: TextStyle(color: textColor)),
+            leading: Icon(Icons.add, color: _textColor),
+            title: Text('Add item', style: TextStyle(color: _textColor)),
             onTap: _addChecklistItem,
           );
         }
@@ -275,14 +258,14 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                   _checklistItems[index]['checked'] = value!;
                 });
               },
-              activeColor: textColor,
+              activeColor: _textColor,
               checkColor: _noteColor,
             ),
             Expanded(
               child: TextField(
                 controller: _checklistItemControllers[index],
                 style: TextStyle(
-                  color: textColor,
+                  color: _textColor,
                   decoration: _checklistItems[index]['checked']
                       ? TextDecoration.lineThrough
                       : TextDecoration.none,
@@ -290,12 +273,12 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                 decoration: InputDecoration(
                   hintText: 'List item',
                   border: InputBorder.none,
-                  hintStyle: TextStyle(color: hintColor),
+                  hintStyle: TextStyle(color: _textColor.withOpacity(0.6)),
                 ),
               ),
             ),
             IconButton(
-              icon: Icon(Icons.delete, color: textColor),
+              icon: Icon(Icons.delete, color: _textColor),
               onPressed: () => _removeChecklistItem(index),
             ),
           ],
@@ -313,27 +296,12 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
       children: [
         GestureDetector(
           onTap: () async {
-            final result = await Navigator.push(
+            _handleDrawingResult(await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => DrawingPage(drawingData: _drawingData),
               ),
-            );
-
-            if (result != null) {
-              _drawingData = result['json'];
-              final imageBytes = result['image'] as Uint8List?;
-              if (imageBytes != null) {
-                final directory = await getApplicationDocumentsDirectory();
-                final path =
-                    '${directory.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png';
-                final file = File(path);
-                await file.writeAsBytes(imageBytes);
-                setState(() {
-                  _drawingImagePath = path;
-                });
-              }
-            }
+            ));
           },
           child: Image.file(
             File(_drawingImagePath!),
@@ -394,22 +362,35 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
     );
   }
 
+  void _handleDrawingResult(Map<String, dynamic>? result) async {
+    if (result != null) {
+      _drawingData = result['json'];
+      final imageBytes = result['image'] as Uint8List?;
+      if (imageBytes != null) {
+        final directory = await getApplicationDocumentsDirectory();
+        final path =
+            '${directory.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png';
+        final file = File(path);
+        await file.writeAsBytes(imageBytes);
+        setState(() {
+          _drawingImagePath = path;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : Colors.black;
-
     return Scaffold(
       backgroundColor: _noteColor,
       appBar: AppBar(
         backgroundColor: _noteColor,
         elevation: 0,
         title: Text(widget.note == null ? 'New Note' : 'Edit Note'),
-        iconTheme: IconThemeData(color: textColor),
-        actionsIconTheme: IconThemeData(color: textColor),
+        iconTheme: IconThemeData(color: _textColor),
+        actionsIconTheme: IconThemeData(color: _textColor),
         titleTextStyle: TextStyle(
-          color: textColor,
+          color: _textColor,
           fontSize: 20,
           fontWeight: FontWeight.bold,
         ),
@@ -430,9 +411,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                         'Are you sure you want to delete this note?'),
                     actions: [
                       TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
+                        onPressed: () => Navigator.pop(context),
                         child: const Text('Cancel'),
                       ),
                       TextButton(
@@ -465,21 +444,19 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                   border: InputBorder.none,
                 ),
                 style: TextStyle(
-                    fontSize: 24,
-                    color: textColor,
-                    fontWeight: FontWeight.bold),
+                  fontSize: 24,
+                  color: _textColor,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               if (_reminder != null)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: Chip(
                     label: Text(
-                        'Reminder: ${DateFormat.yMd().add_jm().format(_reminder!)}'),
-                    onDeleted: () {
-                      setState(() {
-                        _reminder = null;
-                      });
-                    },
+                      'Reminder: ${DateFormat.yMd().add_jm().format(_reminder!)}',
+                    ),
+                    onDeleted: () => setState(() => _reminder = null),
                   ),
                 ),
               const SizedBox(height: 16),
@@ -503,56 +480,31 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
             IconButton(
               icon: Icon(
                 _isChecklist ? Icons.notes : Icons.check_box_outline_blank,
-                color: textColor,
+                color: _textColor,
               ),
-              onPressed: () {
-                setState(() {
-                  _isChecklist = !_isChecklist;
-                });
-              },
+              onPressed: () => setState(() => _isChecklist = !_isChecklist),
             ),
             IconButton(
-              icon: const Icon(Icons.image),
-              color: textColor,
+              icon: Icon(Icons.image, color: _textColor),
               onPressed: _pickImage,
             ),
             IconButton(
-              icon: const Icon(Icons.color_lens),
-              color: textColor,
+              icon: Icon(Icons.color_lens, color: _textColor),
               onPressed: _pickColor,
             ),
             IconButton(
-              icon: const Icon(Icons.alarm),
-              color: textColor,
+              icon: Icon(Icons.alarm, color: _textColor),
               onPressed: _setReminder,
             ),
             IconButton(
-              icon: const Icon(Icons.brush),
-              color: textColor,
-              onPressed: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        DrawingPage(drawingData: _drawingData),
-                  ),
-                );
-
-                if (result != null) {
-                  _drawingData = result['json'];
-                  final imageBytes = result['image'] as Uint8List?;
-                  if (imageBytes != null) {
-                    final directory = await getApplicationDocumentsDirectory();
-                    final path =
-                        '${directory.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png';
-                    final file = File(path);
-                    await file.writeAsBytes(imageBytes);
-                    setState(() {
-                      _drawingImagePath = path;
-                    });
-                  }
-                }
-              },
+              icon: Icon(Icons.brush, color: _textColor),
+              onPressed: () async =>
+                  _handleDrawingResult(await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DrawingPage(drawingData: _drawingData),
+                ),
+              )),
             ),
           ],
         ),
