@@ -46,7 +46,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
       _reminder = widget.note!.reminder;
       _noteColor = widget.note!.themeColor != 'default'
           ? Color(int.parse(widget.note!.themeColor, radix: 16))
-          : Colors.white;
+          : Theme.of(context).cardColor;
       if (widget.note!.checklist.isNotEmpty) {
         setState(() {
           _isChecklist = true;
@@ -123,7 +123,12 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                 child: CircleAvatar(
                   backgroundColor: color,
                   child: _noteColor == color
-                      ? const Icon(Icons.check, color: Colors.black)
+                      ? Icon(
+                          Icons.check,
+                          color: theme.brightness == Brightness.dark
+                              ? Colors.white
+                              : Colors.black,
+                        )
                       : null,
                 ),
               );
@@ -226,13 +231,17 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
   }
 
   Widget _buildTextEditor() {
+    final theme = Theme.of(context);
+    final textColor =
+        theme.brightness == Brightness.dark ? Colors.white : Colors.black;
+
     return TextField(
       controller: _contentController,
-      style: const TextStyle(color: Colors.black),
-      decoration: const InputDecoration(
+      style: TextStyle(color: textColor),
+      decoration: InputDecoration(
         hintText: 'Content',
         border: InputBorder.none,
-        hintStyle: TextStyle(color: Colors.black54),
+        hintStyle: TextStyle(color: textColor.withOpacity(0.6)),
       ),
       maxLines: null,
       keyboardType: TextInputType.multiline,
@@ -240,6 +249,11 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
   }
 
   Widget _buildChecklistEditor() {
+    final theme = Theme.of(context);
+    final textColor =
+        theme.brightness == Brightness.dark ? Colors.white : Colors.black;
+    final hintColor = textColor.withOpacity(0.6);
+
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -247,9 +261,8 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
       itemBuilder: (context, index) {
         if (index == _checklistItems.length) {
           return ListTile(
-            leading: const Icon(Icons.add, color: Colors.black),
-            title:
-                const Text('Add item', style: TextStyle(color: Colors.black)),
+            leading: Icon(Icons.add, color: textColor),
+            title: Text('Add item', style: TextStyle(color: textColor)),
             onTap: _addChecklistItem,
           );
         }
@@ -262,27 +275,27 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                   _checklistItems[index]['checked'] = value!;
                 });
               },
-              activeColor: Colors.black,
+              activeColor: textColor,
               checkColor: _noteColor,
             ),
             Expanded(
               child: TextField(
                 controller: _checklistItemControllers[index],
                 style: TextStyle(
-                  color: Colors.black,
+                  color: textColor,
                   decoration: _checklistItems[index]['checked']
                       ? TextDecoration.lineThrough
                       : TextDecoration.none,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'List item',
                   border: InputBorder.none,
-                  hintStyle: TextStyle(color: Colors.black54),
+                  hintStyle: TextStyle(color: hintColor),
                 ),
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.delete, color: Colors.black),
+              icon: Icon(Icons.delete, color: textColor),
               onPressed: () => _removeChecklistItem(index),
             ),
           ],
@@ -383,16 +396,20 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black;
+
     return Scaffold(
       backgroundColor: _noteColor,
       appBar: AppBar(
         backgroundColor: _noteColor,
         elevation: 0,
         title: Text(widget.note == null ? 'New Note' : 'Edit Note'),
-        iconTheme: const IconThemeData(color: Colors.black),
-        actionsIconTheme: const IconThemeData(color: Colors.black),
-        titleTextStyle: const TextStyle(
-          color: Colors.black,
+        iconTheme: IconThemeData(color: textColor),
+        actionsIconTheme: IconThemeData(color: textColor),
+        titleTextStyle: TextStyle(
+          color: textColor,
           fontSize: 20,
           fontWeight: FontWeight.bold,
         ),
@@ -447,9 +464,9 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                   hintText: 'Title',
                   border: InputBorder.none,
                 ),
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 24,
-                    color: Colors.black,
+                    color: textColor,
                     fontWeight: FontWeight.bold),
               ),
               if (_reminder != null)
@@ -486,7 +503,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
             IconButton(
               icon: Icon(
                 _isChecklist ? Icons.notes : Icons.check_box_outline_blank,
-                color: Colors.black,
+                color: textColor,
               ),
               onPressed: () {
                 setState(() {
@@ -495,19 +512,23 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
               },
             ),
             IconButton(
-              icon: const Icon(Icons.image, color: Colors.black),
+              icon: const Icon(Icons.image),
+              color: textColor,
               onPressed: _pickImage,
             ),
             IconButton(
-              icon: const Icon(Icons.color_lens, color: Colors.black),
+              icon: const Icon(Icons.color_lens),
+              color: textColor,
               onPressed: _pickColor,
             ),
             IconButton(
-              icon: const Icon(Icons.alarm, color: Colors.black),
+              icon: const Icon(Icons.alarm),
+              color: textColor,
               onPressed: _setReminder,
             ),
             IconButton(
-              icon: const Icon(Icons.brush, color: Colors.black),
+              icon: const Icon(Icons.brush),
+              color: textColor,
               onPressed: () async {
                 final result = await Navigator.push(
                   context,
