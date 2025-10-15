@@ -83,6 +83,8 @@ class RecentlyDeletedPage extends ConsumerWidget {
                     return NoteCard(
                       note: note,
                       onTap: () => restoreOrDeleteDialog(note),
+                      isSelected: false,
+                      onLongPress: () {},
                     );
                   },
                 )
@@ -93,6 +95,8 @@ class RecentlyDeletedPage extends ConsumerWidget {
                     return NoteListTile(
                       note: note,
                       onTap: () => restoreOrDeleteDialog(note),
+                      isSelected: false,
+                      onLongPress: () {},
                     );
                   },
                 ),

@@ -60,7 +60,7 @@ class NoteSearchDelegate extends SearchDelegate<Note?> {
                 builder: (context) => NoteEditorPage(note: note),
               ),
             );
-          },
+          }, isSelected: false, onLongPress: () {  },
         );
       },
     );
@@ -94,7 +94,7 @@ class NoteSearchDelegate extends SearchDelegate<Note?> {
                 builder: (context) => NoteEditorPage(note: note),
               ),
             );
-          },
+          }, isSelected: false, onLongPress: () {  },
         );
       },
     );
