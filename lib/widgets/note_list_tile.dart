@@ -17,22 +17,32 @@ class NoteListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = note.themeColor != 'default'
+    final theme = Theme.of(context);
+    final noteColor = note.themeColor != 'default'
         ? Color(int.parse(note.themeColor, radix: 16))
-        : Theme.of(context).cardColor;
+        : theme.colorScheme.surface;
+
     return GestureDetector(
       onTap: onTap,
       onLongPress: onLongPress,
       child: Card(
-        color: isSelected ? Colors.blue.withOpacity(0.5) : color,
+        color: isSelected
+            ? theme.colorScheme.tertiary.withOpacity(0.5)
+            : noteColor,
         margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+        elevation: 1,
+        shadowColor: Colors.grey.withOpacity(0.2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
         child: ListTile(
           leading: isSelected
-              ? const Icon(Icons.check_circle, color: Colors.white)
+              ? Icon(Icons.check_circle, color: theme.colorScheme.onTertiary)
               : null,
           title: Text(
             note.title,
-            style: const TextStyle(color: Colors.black),
+            style: theme.textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.bold),
           ),
           subtitle: note.checklist.isNotEmpty
               ? _buildChecklistPreview(note.checklist)
@@ -40,7 +50,7 @@ class NoteListTile extends StatelessWidget {
                   note.content,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.black),
+                  style: theme.textTheme.bodyMedium,
                 ),
         ),
       ),

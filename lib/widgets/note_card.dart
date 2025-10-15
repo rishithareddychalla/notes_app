@@ -17,27 +17,34 @@ class NoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = note.themeColor != 'default'
+    final theme = Theme.of(context);
+    final noteColor = note.themeColor != 'default'
         ? Color(int.parse(note.themeColor, radix: 16))
-        : Theme.of(context).cardColor;
+        : theme.cardColor;
+
     return GestureDetector(
       onTap: onTap,
       onLongPress: onLongPress,
       child: Card(
-        color: isSelected ? Colors.blue.withOpacity(0.5) : color,
+        color: isSelected
+            ? theme.colorScheme.tertiary.withOpacity(0.5)
+            : noteColor,
+        elevation: 2,
+        shadowColor: Colors.black.withOpacity(0.2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(12.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     note.title,
-                    style: const TextStyle(
-                      fontSize: 18,
+                    style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -48,18 +55,18 @@ class NoteCard extends StatelessWidget {
                       note.content,
                       maxLines: 5,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.black),
+                      style: theme.textTheme.bodyMedium,
                     ),
                 ],
               ),
             ),
             if (isSelected)
-              const Positioned(
-                top: 4,
-                right: 4,
+              Positioned(
+                top: 8,
+                right: 8,
                 child: Icon(
                   Icons.check_circle,
-                  color: Colors.white,
+                  color: theme.colorScheme.onTertiary,
                 ),
               ),
           ],
