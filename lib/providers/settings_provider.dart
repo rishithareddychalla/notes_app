@@ -11,36 +11,33 @@ class SettingsNotifier extends StateNotifier<ThemeMode> {
 
   final Ref _ref;
 
-  Future<SharedPreferences> _getPrefs() async {
-    return await SharedPreferences.getInstance();
-  }
-
   NoteView get noteView {
     final prefs = _ref.watch(sharedPreferencesProvider);
     final noteViewIndex = prefs.getInt('note_view') ?? 0;
     return NoteView.values[noteViewIndex];
   }
 
-  void _loadSettings() async {
-    final prefs = await _getPrefs();
+  void _loadSettings() {
+    final prefs = _ref.read(sharedPreferencesProvider);
     final themeModeName = prefs.getString('theme_mode') ?? 'system';
     state = ThemeMode.values.firstWhere((e) => e.name == themeModeName);
   }
 
-  void updateThemeMode(ThemeMode themeMode) async {
-    final prefs = await _getPrefs();
+  void updateThemeMode(ThemeMode themeMode) {
+    final prefs = _ref.read(sharedPreferencesProvider);
     prefs.setString('theme_mode', themeMode.name);
     state = themeMode;
   }
 
-  void updateNoteView(NoteView noteView) async {
-    final prefs = await _getPrefs();
+  void updateNoteView(NoteView noteView) {
+    final prefs = _ref.read(sharedPreferencesProvider);
     prefs.setInt('note_view', noteView.index);
     _ref.invalidate(noteViewProvider);
   }
 }
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
+  // This provider is overridden in main.dart
   throw UnimplementedError();
 });
 
