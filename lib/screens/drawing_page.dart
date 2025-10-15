@@ -23,6 +23,7 @@ class _DrawingPageState extends State<DrawingPage> {
       final List<dynamic> history = jsonDecode(widget.drawingData!);
       final List<PaintContent> contents = history
           .map((item) => _getPaintContentFromJson(item as Map<String, dynamic>))
+          .whereType<PaintContent>()
           .toList();
       _drawingController.addContents(contents);
     }
@@ -34,7 +35,7 @@ class _DrawingPageState extends State<DrawingPage> {
     super.dispose();
   }
 
-  PaintContent _getPaintContentFromJson(Map<String, dynamic> json) {
+  PaintContent? _getPaintContentFromJson(Map<String, dynamic> json) {
     final String type = json['type'] as String;
     switch (type) {
       case 'SimpleLine':
@@ -50,7 +51,7 @@ class _DrawingPageState extends State<DrawingPage> {
       case 'Eraser':
         return Eraser.fromJson(json);
       default:
-        throw Exception('Unknown PaintContent type: $type');
+        return null;
     }
   }
 
