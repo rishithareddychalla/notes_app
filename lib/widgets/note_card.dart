@@ -45,6 +45,7 @@ class NoteCard extends StatelessWidget {
                     note.title,
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
+                      color: Colors.black,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -55,7 +56,7 @@ class NoteCard extends StatelessWidget {
                       note.content,
                       maxLines: 5,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium,
+                      style: const TextStyle(color: Colors.black),
                     ),
                 ],
               ),
