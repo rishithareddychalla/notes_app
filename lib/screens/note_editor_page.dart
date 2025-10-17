@@ -13,6 +13,8 @@ import 'package:notes_app/utils/colors.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+enum DialogAction { save, discard, cancel }
+
 class NoteEditorPage extends ConsumerStatefulWidget {
   final Note? note;
 
@@ -34,6 +36,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
   String? _drawingImagePath;
   DateTime? _reminder;
   bool _isInitialized = false;
+  Note? _initialNote;
 
   Color get _textColor =>
       _noteColor.computeLuminance() > 0.5 ? Colors.black : Colors.white;
@@ -64,6 +67,16 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         _noteColor = Theme.of(context).cardColor;
       }
       _isInitialized = true;
+      if (widget.note != null) {
+        _initialNote = widget.note!.copyWith();
+      } else {
+        _initialNote = Note(
+          title: '',
+          content: '',
+          creationDate: DateTime.now(),
+          themeColor: _noteColor.value.toRadixString(16),
+        );
+      }
     }
   }
 
@@ -169,7 +182,75 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
     }
   }
 
-  void _saveNote() {
+  bool _isNoteModified() {
+    for (var i = 0; i < _checklistItems.length; i++) {
+      _checklistItems[i]['text'] = _checklistItemControllers[i].text;
+    }
+    final checklist = _checklistItems
+        .where((item) => (item['text'] as String).isNotEmpty)
+        .toList();
+
+    final currentNote = _initialNote?.copyWith(
+      title: _titleController.text,
+      content: _contentController.text,
+      checklist: checklist,
+      imagePaths: _imagePaths,
+      themeColor: _noteColor.value.toRadixString(16),
+      drawing: _drawingData,
+      drawingImagePath: _drawingImagePath,
+      reminder: _reminder,
+    );
+    return !(_initialNote == currentNote);
+  }
+
+  bool _isNoteEmpty() {
+    return _titleController.text.isEmpty &&
+        _contentController.text.isEmpty &&
+        _checklistItems.every((item) => (item['text'] as String).isEmpty) &&
+        _imagePaths.isEmpty &&
+        _drawingData == null;
+  }
+
+  Future<bool> _onWillPop() async {
+    if (_isNoteModified() && !_isNoteEmpty()) {
+      final action = await showDialog<DialogAction>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Save changes?'),
+          content: const Text('Do you want to save the changes you made?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, DialogAction.discard),
+              child: const Text('Discard'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, DialogAction.cancel),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, DialogAction.save),
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      );
+
+      switch (action) {
+        case DialogAction.save:
+          _saveNote(pop: false);
+          return true;
+        case DialogAction.discard:
+          return true;
+        case DialogAction.cancel:
+          return false;
+        default:
+          return false;
+      }
+    }
+    return true;
+  }
+
+  void _saveNote({bool pop = true}) {
     final title = _titleController.text;
     final notesNotifier = ref.read(notesProvider.notifier);
 
@@ -218,8 +299,9 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         notesNotifier.updateNote(note);
       }
     }
-
-    Navigator.pop(context);
+    if (pop && Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
   }
 
   Widget _buildTextEditor() {
@@ -381,9 +463,11 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _noteColor,
-      appBar: AppBar(
+    return WillPopScope(
+        onWillPop: _onWillPop,
+        child: Scaffold(
+            backgroundColor: _noteColor,
+            appBar: AppBar(
         backgroundColor: _noteColor,
         elevation: 0,
         title: Text(widget.note == null ? 'New Note' : 'Edit Note'),
@@ -509,6 +593,6 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
           ],
         ),
       ),
-    );
+    ));
   }
 }
