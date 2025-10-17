@@ -42,7 +42,7 @@ class NoteListTile extends StatelessWidget {
           title: Text(
             note.title,
             style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.bold),
+                ?.copyWith(fontWeight: FontWeight.bold, color: Colors.black),
           ),
           subtitle: note.checklist.isNotEmpty
               ? _buildChecklistPreview(note.checklist)
@@ -50,7 +50,7 @@ class NoteListTile extends StatelessWidget {
                   note.content,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium,
+                  style: const TextStyle(color: Colors.black),
                 ),
         ),
       ),
