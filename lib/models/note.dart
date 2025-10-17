@@ -111,4 +111,43 @@ class Note {
   String toJson() => json.encode(toMap());
 
   factory Note.fromJson(String source) => Note.fromMap(json.decode(source));
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is Note &&
+        other.title == title &&
+        other.content == content &&
+        other.creationDate == creationDate &&
+        other.imagePaths == imagePaths &&
+        other.documentPaths == documentPaths &&
+        other.checklist == checklist &&
+        other.themeColor == themeColor &&
+        other.fontStyle == fontStyle &&
+        other.paragraphStyle == paragraphStyle &&
+        other.reminder == reminder &&
+        other.deletionDate == deletionDate &&
+        other.id == id &&
+        other.drawing == drawing &&
+        other.drawingImagePath == drawingImagePath;
+  }
+
+  @override
+  int get hashCode {
+    return title.hashCode ^
+        content.hashCode ^
+        creationDate.hashCode ^
+        imagePaths.hashCode ^
+        documentPaths.hashCode ^
+        checklist.hashCode ^
+        themeColor.hashCode ^
+        fontStyle.hashCode ^
+        paragraphStyle.hashCode ^
+        reminder.hashCode ^
+        deletionDate.hashCode ^
+        id.hashCode ^
+        drawing.hashCode ^
+        drawingImagePath.hashCode;
+  }
 }
