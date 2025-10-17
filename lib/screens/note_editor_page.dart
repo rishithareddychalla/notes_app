@@ -67,21 +67,26 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         _noteColor = Theme.of(context).cardColor;
       }
       _isInitialized = true;
-      if (widget.note != null) {
-        _initialNote = widget.note!.copyWith();
-      } else {
-        _initialNote = Note(
-          title: '',
-          content: '',
-          creationDate: DateTime.now(),
-          themeColor: _noteColor.value.toRadixString(16),
-        );
+      _initialNote = widget.note?.copyWith() ??
+          Note(
+            title: '',
+            content: '',
+            creationDate: DateTime.now(),
+            themeColor: _noteColor.value.toRadixString(16),
+          );
+      _titleController.addListener(_updateActiveNote);
+      _contentController.addListener(_updateActiveNote);
+      for (final controller in _checklistItemControllers) {
+        controller.addListener(_updateActiveNote);
       }
+      Future.microtask(
+          () => ref.read(activeNoteProvider.notifier).state = _initialNote);
     }
   }
 
   @override
   void dispose() {
+    Future.microtask(() => ref.read(activeNoteProvider.notifier).state = null);
     _titleController.dispose();
     _contentController.dispose();
     for (final controller in _checklistItemControllers) {
@@ -90,10 +95,33 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
     super.dispose();
   }
 
+  void _updateActiveNote() {
+    for (var i = 0; i < _checklistItems.length; i++) {
+      _checklistItems[i]['text'] = _checklistItemControllers[i].text;
+    }
+    final checklist = _checklistItems
+        .where((item) => (item['text'] as String).isNotEmpty)
+        .toList();
+
+    final activeNote = _initialNote?.copyWith(
+      title: _titleController.text,
+      content: _contentController.text,
+      checklist: checklist,
+      imagePaths: _imagePaths,
+      themeColor: _noteColor.value.toRadixString(16),
+      drawing: _drawingData,
+      drawingImagePath: _drawingImagePath,
+      reminder: _reminder,
+    );
+    ref.read(activeNoteProvider.notifier).state = activeNote;
+  }
+
   void _addChecklistItem() {
     setState(() {
       _checklistItems.add({'text': '', 'checked': false});
-      _checklistItemControllers.add(TextEditingController());
+      final controller = TextEditingController();
+      controller.addListener(_updateActiveNote);
+      _checklistItemControllers.add(controller);
     });
   }
 
@@ -103,6 +131,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
       _checklistItemControllers.removeAt(index);
       _checklistItems.removeAt(index);
     });
+    _updateActiveNote();
   }
 
   Future<void> _pickImage() async {
@@ -112,6 +141,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
       final pickedFile = await picker.pickImage(source: ImageSource.gallery);
       if (pickedFile != null) {
         setState(() => _imagePaths.add(pickedFile.path));
+        _updateActiveNote();
       }
     }
   }
@@ -138,6 +168,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                   setState(() {
                     _noteColor = color;
                   });
+                  _updateActiveNote();
                   Navigator.of(context).pop();
                 },
                 child: CircleAvatar(
@@ -178,6 +209,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
           _reminder =
               DateTime(date.year, date.month, date.day, time.hour, time.minute);
         });
+        _updateActiveNote();
       }
     }
   }
@@ -339,6 +371,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                 setState(() {
                   _checklistItems[index]['checked'] = value!;
                 });
+                _updateActiveNote();
               },
               activeColor: _textColor,
               checkColor: _noteColor,
@@ -402,6 +435,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                 _drawingData = null;
                 _drawingImagePath = null;
               });
+              _updateActiveNote();
             },
           ),
         ),
@@ -458,6 +492,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
           _drawingImagePath = path;
         });
       }
+      _updateActiveNote();
     }
   }
 
@@ -540,7 +575,10 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                     label: Text(
                       'Reminder: ${DateFormat.yMd().add_jm().format(_reminder!)}',
                     ),
-                    onDeleted: () => setState(() => _reminder = null),
+                    onDeleted: () {
+                      setState(() => _reminder = null);
+                      _updateActiveNote();
+                    },
                   ),
                 ),
               const SizedBox(height: 16),
@@ -566,7 +604,10 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                 _isChecklist ? Icons.notes : Icons.check_box_outline_blank,
                 color: _textColor,
               ),
-              onPressed: () => setState(() => _isChecklist = !_isChecklist),
+              onPressed: () {
+                setState(() => _isChecklist = !_isChecklist);
+                _updateActiveNote();
+              },
             ),
             IconButton(
               icon: Icon(Icons.image, color: _textColor),

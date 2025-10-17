@@ -158,3 +158,5 @@ class DeletedNotesNotifier extends StateNotifier<List<Note>> {
 final deletedNotesProvider = StateNotifierProvider<DeletedNotesNotifier, List<Note>>((ref) {
   return DeletedNotesNotifier(ref);
 });
+
+final activeNoteProvider = StateProvider<Note?>((ref) => null);
