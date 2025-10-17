@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 class Note {
   String title;
@@ -53,9 +54,12 @@ class Note {
       title: title ?? this.title,
       content: content ?? this.content,
       creationDate: creationDate ?? this.creationDate,
-      imagePaths: imagePaths ?? this.imagePaths,
-      documentPaths: documentPaths ?? this.documentPaths,
-      checklist: checklist ?? this.checklist,
+      imagePaths: imagePaths != null ? List<String>.from(imagePaths) : this.imagePaths,
+      documentPaths:
+          documentPaths != null ? List<String>.from(documentPaths) : this.documentPaths,
+      checklist: checklist != null
+          ? checklist.map((item) => Map<String, dynamic>.from(item)).toList()
+          : this.checklist,
       themeColor: themeColor ?? this.themeColor,
       fontStyle: fontStyle ?? this.fontStyle,
       paragraphStyle: paragraphStyle ?? this.paragraphStyle,
@@ -117,25 +121,26 @@ class Note {
     if (identical(this, other)) return true;
 
     return other is Note &&
+        other.id == id &&
         other.title == title &&
         other.content == content &&
         other.creationDate == creationDate &&
-        other.imagePaths == imagePaths &&
-        other.documentPaths == documentPaths &&
-        other.checklist == checklist &&
+        listEquals(other.imagePaths, imagePaths) &&
+        listEquals(other.documentPaths, documentPaths) &&
+        listEquals(other.checklist, checklist) &&
         other.themeColor == themeColor &&
         other.fontStyle == fontStyle &&
         other.paragraphStyle == paragraphStyle &&
         other.reminder == reminder &&
         other.deletionDate == deletionDate &&
-        other.id == id &&
         other.drawing == drawing &&
         other.drawingImagePath == drawingImagePath;
   }
 
   @override
   int get hashCode {
-    return title.hashCode ^
+    return id.hashCode ^
+        title.hashCode ^
         content.hashCode ^
         creationDate.hashCode ^
         imagePaths.hashCode ^
@@ -146,7 +151,6 @@ class Note {
         paragraphStyle.hashCode ^
         reminder.hashCode ^
         deletionDate.hashCode ^
-        id.hashCode ^
         drawing.hashCode ^
         drawingImagePath.hashCode;
   }

@@ -45,35 +45,33 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_isInitialized) {
-      if (widget.note != null) {
-        _titleController.text = widget.note!.title;
-        _contentController.text = widget.note!.content;
-        _imagePaths = List<String>.from(widget.note!.imagePaths);
-        _drawingData = widget.note!.drawing;
-        _drawingImagePath = widget.note!.drawingImagePath;
-        _reminder = widget.note!.reminder;
-        _noteColor = widget.note!.themeColor != 'default'
-            ? Color(int.parse(widget.note!.themeColor, radix: 16))
-            : Theme.of(context).cardColor;
-        if (widget.note!.checklist.isNotEmpty) {
-          _isChecklist = true;
-          _checklistItems =
-              List<Map<String, dynamic>>.from(widget.note!.checklist);
-          _checklistItemControllers.addAll(_checklistItems
-              .map((item) => TextEditingController(text: item['text']))
-              .toList());
-        }
-      } else {
-        _noteColor = Theme.of(context).cardColor;
-      }
-      _isInitialized = true;
       _initialNote = widget.note?.copyWith() ??
           Note(
             title: '',
             content: '',
             creationDate: DateTime.now(),
-            themeColor: _noteColor.value.toRadixString(16),
+            themeColor: Theme.of(context).cardColor.value.toRadixString(16),
           );
+
+      _titleController.text = _initialNote!.title;
+      _contentController.text = _initialNote!.content;
+      _imagePaths = List<String>.from(_initialNote!.imagePaths);
+      _drawingData = _initialNote!.drawing;
+      _drawingImagePath = _initialNote!.drawingImagePath;
+      _reminder = _initialNote!.reminder;
+      _noteColor = Color(int.parse(_initialNote!.themeColor, radix: 16));
+
+      if (_initialNote!.checklist.isNotEmpty) {
+        _isChecklist = true;
+        _checklistItems = _initialNote!.checklist
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList();
+        _checklistItemControllers.addAll(_checklistItems
+            .map((item) => TextEditingController(text: item['text']))
+            .toList());
+      }
+
+      _isInitialized = true;
       _titleController.addListener(_updateActiveNote);
       _contentController.addListener(_updateActiveNote);
       for (final controller in _checklistItemControllers) {
